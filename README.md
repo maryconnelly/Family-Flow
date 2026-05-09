@@ -1,2 +1,2 @@
-# Meal-Planner-Calendar
-A unified productivity app that combines your calendar, to-do list, and meal planner into one seamless daily view.
+# FamilyFlow
+An AI-powered productivity app that syncs your schedule with intelligent meal planning — suggests meals based on your calendar, and auto-generates your grocery list.
