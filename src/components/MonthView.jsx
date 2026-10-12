@@ -3,7 +3,7 @@ import { eventsOnDay } from '../google.js';
 import { SLOTS, findMeal, mealLabel } from '../meals.js';
 import { DayWeather } from './Weather.jsx';
 
-const MAX_EVENTS = 3;
+const MAX_EVENTS = 8;
 // Jan 4, 2026 is a Sunday; used only to get localized weekday names.
 const WEEKDAYS = Array.from({ length: 7 }, (_, i) =>
   new Date(2026, 0, 4 + i).toLocaleDateString(undefined, { weekday: 'short' }),

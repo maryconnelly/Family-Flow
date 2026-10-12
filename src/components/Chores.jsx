@@ -69,32 +69,79 @@ function DayPicker({ days, onChange }) {
   );
 }
 
-function AddChore({ onAdd }) {
+// Moves chore `id` just before (or after) `targetId` in the full chores array; display order follows array order.
+function moveChore(chores, id, targetId, after) {
+  if (id === targetId) return chores;
+  const moving = chores.find((c) => c.id === id);
+  const rest = chores.filter((c) => c.id !== id);
+  const i = rest.findIndex((c) => c.id === targetId);
+  if (!moving || i < 0) return chores;
+  rest.splice(after ? i + 1 : i, 0, moving);
+  return rest;
+}
+
+function AddChore({ sectionLabel, onAdd }) {
   const [name, setName] = useState('');
   const [days, setDays] = useState(EVERY_DAY);
-  const [section, setSection] = useState('morning');
   return (
     <form
       className="add-chore"
       onSubmit={(e) => {
         e.preventDefault();
         if (!name.trim() || days.length === 0) return;
-        onAdd(name.trim(), days, section);
+        onAdd(name.trim(), days);
         setName('');
       }}
     >
       <div className="add-row">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Add a chore, e.g. Make bed" />
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={`New ${sectionLabel.toLowerCase()} chore…`}
+          aria-label={`New ${sectionLabel.toLowerCase()} chore…`}
+        />
         <button className="btn primary" type="submit" disabled={days.length === 0}>Add</button>
       </div>
-      <SectionPicker value={section} onChange={setSection} />
       <DayPicker days={days} onChange={setDays} />
     </form>
   );
 }
 
-function KidChart({ kid, chores, checked, days, today, update }) {
+function KidChart({ kid, chores, section, sectionLabel, checked, days, today, update }) {
   const [editingId, setEditingId] = useState(null);
+  const [draggingId, setDraggingId] = useState(null);
+  const [dropTarget, setDropTarget] = useState(null); // { id, after }
+
+  const reorder = (id, targetId, after) => update('chores', (cs) => moveChore(cs, id, targetId, after));
+
+  // Arrow keys on a focused handle move the chore past its neighbor in this list.
+  function onHandleKey(e, index) {
+    const neighbor = e.key === 'ArrowUp' ? chores[index - 1] : e.key === 'ArrowDown' ? chores[index + 1] : null;
+    if (!neighbor) return;
+    e.preventDefault();
+    reorder(chores[index].id, neighbor.id, e.key === 'ArrowDown');
+    // Keep focus on the moved chore's handle after it re-renders.
+    const id = chores[index].id;
+    requestAnimationFrame(() => document.querySelector(`[data-handle="${id}"]`)?.focus());
+  }
+
+  // Drop indicators: drop above a row's middle inserts before it, below inserts after.
+  const dragProps = (chore) => ({
+    onDragOver: (e) => {
+      if (!draggingId) return; // Ignore drags from the other kid's chart.
+      e.preventDefault();
+      const rect = e.currentTarget.getBoundingClientRect();
+      const after = e.clientY > rect.top + rect.height / 2;
+      if (dropTarget?.id !== chore.id || dropTarget.after !== after) setDropTarget({ id: chore.id, after });
+    },
+    onDrop: (e) => {
+      if (!draggingId) return;
+      e.preventDefault();
+      if (dropTarget) reorder(draggingId, dropTarget.id, dropTarget.after);
+      setDraggingId(null);
+      setDropTarget(null);
+    },
+  });
 
   const patchChore = (id, p) => update('chores', (cs) => cs.map((c) => (c.id === id ? { ...c, ...p } : c)));
   const removeChore = (chore) => {
@@ -108,6 +155,7 @@ function KidChart({ kid, chores, checked, days, today, update }) {
         : [...cs, { choreId, date }],
     );
 
+  // Progress counts only the chores in the section being shown.
   const scheduled = (chore, day) => chore.days.includes(day.getDay());
   const todayDow = new Date().getDay();
   const dueToday = chores.filter((c) => c.days.includes(todayDow));
@@ -135,7 +183,7 @@ function KidChart({ kid, chores, checked, days, today, update }) {
         <div className="kid-stats">
           {dueToday.length > 0 &&
             (doneToday === dueToday.length ? (
-              <span className="all-done">⭐ All done today!</span>
+              <span className="all-done">⭐ All done!</span>
             ) : (
               <span>Today: <strong>{doneToday}/{dueToday.length}</strong></span>
             ))}
@@ -144,7 +192,7 @@ function KidChart({ kid, chores, checked, days, today, update }) {
       </div>
 
       {chores.length === 0 ? (
-        <p className="empty">No chores yet. Add one below.</p>
+        <p className="empty">No {sectionLabel.toLowerCase()} chores yet. Add one below.</p>
       ) : (
         <table className="chore-table">
           <thead>
@@ -160,72 +208,98 @@ function KidChart({ kid, chores, checked, days, today, update }) {
             </tr>
           </thead>
           <tbody>
-            {SECTIONS.map(([sectionId, label]) => {
-              const list = chores.filter((c) => sectionOf(c) === sectionId);
-              if (list.length === 0) return null;
-              return (
-                <Fragment key={sectionId}>
-                  <tr className="section-row">
-                    <th colSpan={days.length + 2}>{label}</th>
+            {chores.map((chore, index) => (
+              <Fragment key={chore.id}>
+                <tr
+                  {...dragProps(chore)}
+                  className={[
+                    draggingId === chore.id && 'dragging',
+                    dropTarget?.id === chore.id && draggingId !== chore.id && (dropTarget.after ? 'drop-after' : 'drop-before'),
+                  ].filter(Boolean).join(' ')}
+                >
+                  <td className="chore-col">
+                    <div className="chore-cell">
+                      <button
+                        type="button"
+                        className="drag-handle"
+                        draggable
+                        data-handle={chore.id}
+                        aria-label={`Reorder ${chore.name} (use arrow keys)`}
+                        title="Drag to reorder"
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = 'move';
+                          e.dataTransfer.setData('text/plain', chore.id);
+                          e.dataTransfer.setDragImage(e.currentTarget.closest('tr'), 12, 16);
+                          setDraggingId(chore.id);
+                        }}
+                        onDragEnd={() => {
+                          setDraggingId(null);
+                          setDropTarget(null);
+                        }}
+                        onKeyDown={(e) => onHandleKey(e, index)}
+                      >
+                        ⠿
+                      </button>
+                      <div className="chore-text">
+                        <input
+                          className="plain chore-name"
+                          value={chore.name}
+                          aria-label="Chore name"
+                          title="Click to rename"
+                          onChange={(e) => patchChore(chore.id, { name: e.target.value })}
+                        />
+                        <button className="link-btn chore-days" onClick={() => setEditingId(editingId === chore.id ? null : chore.id)}>
+                          {describeDays(chore.days)} ▾
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                  {days.map((day) => {
+                    const key = toKey(day);
+                    if (!scheduled(chore, day)) return <td key={key} className={`off ${key === today ? 'today' : ''}`} />;
+                    const done = checked.has(`${chore.id}|${key}`);
+                    return (
+                      <td key={key} className={key === today ? 'today' : ''}>
+                        <input
+                          type="checkbox"
+                          className="chore-check"
+                          checked={done}
+                          disabled={key > today}
+                          title={key > today ? 'Not yet!' : undefined}
+                          aria-label={`${chore.name} on ${fmtWeekday(day)}`}
+                          onChange={() => toggle(chore.id, key)}
+                        />
+                      </td>
+                    );
+                  })}
+                  <td>
+                    <button className="icon-btn subtle" onClick={() => removeChore(chore)} aria-label={`Delete ${chore.name}`} title="Delete chore">×</button>
+                  </td>
+                </tr>
+                {editingId === chore.id && (
+                  <tr className="edit-row">
+                    <td colSpan={days.length + 2}>
+                      <div className="chore-edit">
+                        <DayPicker days={chore.days} onChange={(d) => d.length && patchChore(chore.id, { days: d })} />
+                        <div className="move-to">
+                          <span className="hint">Move to:</span>
+                          <SectionPicker value={sectionOf(chore)} onChange={(sec) => patchChore(chore.id, { section: sec })} />
+                          <button type="button" className="btn primary done-btn" onClick={() => setEditingId(null)}>Done</button>
+                        </div>
+                      </div>
+                    </td>
                   </tr>
-                  {list.map((chore) => (
-                    <Fragment key={chore.id}>
-                      <tr>
-                        <td className="chore-col">
-                          <input
-                            className="plain chore-name"
-                            value={chore.name}
-                            aria-label="Chore name"
-                            title="Click to rename"
-                            onChange={(e) => patchChore(chore.id, { name: e.target.value })}
-                          />
-                          <button className="link-btn chore-days" onClick={() => setEditingId(editingId === chore.id ? null : chore.id)}>
-                            {describeDays(chore.days)} ▾
-                          </button>
-                        </td>
-                        {days.map((day) => {
-                          const key = toKey(day);
-                          if (!scheduled(chore, day)) return <td key={key} className={`off ${key === today ? 'today' : ''}`} />;
-                          const done = checked.has(`${chore.id}|${key}`);
-                          return (
-                            <td key={key} className={key === today ? 'today' : ''}>
-                              <input
-                                type="checkbox"
-                                className="chore-check"
-                                checked={done}
-                                disabled={key > today}
-                                title={key > today ? 'Not yet!' : undefined}
-                                aria-label={`${chore.name} on ${fmtWeekday(day)}`}
-                                onChange={() => toggle(chore.id, key)}
-                              />
-                            </td>
-                          );
-                        })}
-                        <td>
-                          <button className="icon-btn subtle" onClick={() => removeChore(chore)} aria-label={`Delete ${chore.name}`} title="Delete chore">×</button>
-                        </td>
-                      </tr>
-                      {editingId === chore.id && (
-                        <tr className="edit-row">
-                          <td colSpan={days.length + 2}>
-                            <div className="chore-edit">
-                              <SectionPicker value={sectionOf(chore)} onChange={(sec) => patchChore(chore.id, { section: sec })} />
-                              <DayPicker days={chore.days} onChange={(d) => d.length && patchChore(chore.id, { days: d })} />
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </Fragment>
-                  ))}
-                </Fragment>
-              );
-            })}
+                )}
+              </Fragment>
+            ))}
           </tbody>
         </table>
       )}
 
       <AddChore
-        onAdd={(name, choreDays, section) =>
+        key={section}
+        sectionLabel={sectionLabel}
+        onAdd={(name, choreDays) =>
           update('chores', (cs) => [...cs, { id: newId(), kidId: kid.id, name, days: choreDays, section, createdAt: Date.now() }])
         }
       />
@@ -233,15 +307,28 @@ function KidChart({ kid, chores, checked, days, today, update }) {
   );
 }
 
+// Opens on the part of the day it is now.
+function currentSection() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'morning';
+  if (hour < 17) return 'afterschool';
+  return 'evening';
+}
+
 export default function Chores({ state, update, weekStart, setWeekStart }) {
   const { kids, chores, choreChecks } = state;
+  const [section, setSection] = useState(currentSection);
   const today = todayKey();
   const days = weekDays(weekStart);
   const checked = new Set(choreChecks.map((c) => `${c.choreId}|${c.date}`));
+  const sectionLabel = SECTIONS.find(([id]) => id === section)[1].replace(/^\S+\s/, '');
 
   return (
     <section>
       <div className="toolbar">
+        <div className="section-tabs">
+          <SectionPicker value={section} onChange={setSection} />
+        </div>
         <WeekNav weekStart={weekStart} setWeekStart={setWeekStart} />
       </div>
       <div className="kid-grid">
@@ -249,7 +336,9 @@ export default function Chores({ state, update, weekStart, setWeekStart }) {
           <KidChart
             key={kid.id}
             kid={kid}
-            chores={chores.filter((c) => c.kidId === kid.id)}
+            chores={chores.filter((c) => c.kidId === kid.id && sectionOf(c) === section)}
+            section={section}
+            sectionLabel={sectionLabel}
             checked={checked}
             days={days}
             today={today}
