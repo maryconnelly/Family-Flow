@@ -107,7 +107,16 @@ export function TodoItem({ todo, onToggle, onChange, onDelete, showDue = true, o
     <li className={`todo ${todo.done ? 'done' : ''}`}>
       <input type="checkbox" checked={todo.done} onChange={onToggle} aria-label="Done" />
       {onChange ? (
-        <input className="plain todo-text" value={todo.text} onChange={(e) => onChange({ text: e.target.value })} />
+        <input
+          className="plain todo-text"
+          value={todo.text}
+          title="Click to edit"
+          aria-label="To-do"
+          onChange={(e) => onChange({ text: e.target.value })}
+          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+          // Clearing the text and leaving the field deletes the to-do.
+          onBlur={() => !todo.text.trim() && onDelete?.()}
+        />
       ) : (
         <span className="todo-text">{todo.text}</span>
       )}
@@ -121,7 +130,7 @@ export function TodoItem({ todo, onToggle, onChange, onDelete, showDue = true, o
           aria-label="Due date"
         />
       )}
-      {onDelete && <button className="icon-btn subtle" onClick={onDelete} aria-label="Delete">×</button>}
+      {onDelete && <button className="icon-btn subtle" onClick={onDelete} aria-label="Delete to-do" title="Delete">×</button>}
     </li>
   );
 }

@@ -108,7 +108,13 @@ export default function Todos({ state, update }) {
               <summary>Completed ({done.length})</summary>
               <ul className="todos">
                 {done.map((t) => (
-                  <TodoItem key={t.id} todo={t} onToggle={() => patch(t.id, { done: false })} onDelete={() => remove(t.id)} />
+                  <TodoItem
+                    key={t.id}
+                    todo={t}
+                    onToggle={() => patch(t.id, { done: false })}
+                    onChange={(p) => patch(t.id, p)}
+                    onDelete={() => remove(t.id)}
+                  />
                 ))}
               </ul>
               <button className="link-btn" onClick={() => update('todos', (ts) => ts.filter((t) => !(t.listId === list.id && t.done)))}>

@@ -60,8 +60,11 @@ code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; font-
 .link-btn.danger { color: var(--danger); }
 .icon-btn { background: none; border: 1px solid var(--border); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 1.1rem; line-height: 1; }
 .icon-btn:hover { background: var(--surface-2); }
-.icon-btn.subtle { border: none; color: var(--muted); opacity: 0; }
+.icon-btn.subtle { border: none; color: var(--muted); opacity: 0.45; flex: none; }
 li:hover > .icon-btn.subtle, .icon-btn.subtle:focus-visible { opacity: 1; }
+.icon-btn.subtle:hover { color: var(--danger); background: none; }
+.todos.compact .icon-btn { width: 20px; height: 20px; font-size: 1rem; }
+.todo input.todo-text { cursor: text; }
 
 input:not([type='checkbox']), textarea, select { border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 6px 10px; min-width: 0; }
 input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }

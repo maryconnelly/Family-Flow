@@ -27,6 +27,7 @@ export default function WeekView({ state, update, calendar, weather, weekStart }
   const { todos, recipes, meals, lists } = state;
 
   const patchTodo = (id, patch) => update('todos', (ts) => ts.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+  const removeTodo = (id) => update('todos', (ts) => ts.filter((t) => t.id !== id));
   const addTodo = (text, due) =>
     update('todos', (ts) => [...ts, { id: newId(), listId: lists[0]?.id, text, done: false, due, createdAt: Date.now() }]);
 
@@ -79,6 +80,8 @@ export default function WeekView({ state, update, calendar, weather, weekStart }
                   overdue={t.due < key}
                   showDue={false}
                   onToggle={() => patchTodo(t.id, { done: !t.done })}
+                  onChange={(p) => patchTodo(t.id, p)}
+                  onDelete={() => removeTodo(t.id)}
                 />
               ))}
             </ul>
