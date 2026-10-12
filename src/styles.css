@@ -217,3 +217,12 @@ textarea { width: 100%; resize: vertical; }
 .day-weather.compact { gap: 3px; font-size: 0.75rem; }
 .day-weather.compact .wx-icon { font-size: 0.9rem; }
 .month-cell-head { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+
+/* Recipe link import */
+.link-row { display: flex; gap: 6px; font-weight: 400; }
+.link-row input { flex: 1; }
+.notice.warn { background: var(--warn-soft); color: var(--warn); }
+.recipe-list li { display: flex; align-items: center; }
+.recipe-list li button { flex: 1; }
+.recipe-link { flex: none; padding: 6px 8px; color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--surface-2); align-self: stretch; display: flex; align-items: center; }
+.recipe-link:hover { color: var(--accent); }

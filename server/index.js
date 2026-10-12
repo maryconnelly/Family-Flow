@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ImportError, importRecipe } from './recipeImport.js';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const DATA_DIR = path.join(ROOT, 'data');
@@ -63,6 +64,16 @@ app.put('/api/state/:key', async (req, res) => {
   } catch (err) {
     console.error('Failed to save data:', err);
     res.status(500).json({ error: 'Failed to save data' });
+  }
+});
+
+app.post('/api/import-recipe', async (req, res) => {
+  try {
+    res.json(await importRecipe(req.body?.url));
+  } catch (err) {
+    if (err instanceof ImportError) return res.status(422).json({ error: err.message });
+    console.error('Recipe import failed:', err);
+    res.status(500).json({ error: 'Something went wrong reading that page.' });
   }
 });
 

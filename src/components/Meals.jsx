@@ -4,24 +4,78 @@ import { SLOTS, findMeal, setMeal } from '../meals.js';
 import { newId } from '../store.js';
 import { MealSlot, WeekNav } from './common.jsx';
 
+const URL_RE = /https?:\/\/[^\s)]+/;
+
 function RecipeEditor({ recipe, onSave, onCancel, onDelete }) {
   const [name, setName] = useState(recipe.name);
   const [ingredients, setIngredients] = useState(recipe.ingredients.join('\n'));
   const [notes, setNotes] = useState(recipe.notes || '');
+  // Older recipes kept their link in the notes; pick it up from there.
+  const [url, setUrl] = useState(recipe.url || recipe.notes?.match(URL_RE)?.[0] || '');
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState(null); // { ok, text }
+
+  async function importFromLink() {
+    if (!url.trim() || importing) return;
+    setImporting(true);
+    setImportMsg(null);
+    try {
+      const res = await fetch('/api/import-recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Import failed (${res.status})`);
+      if (ingredients.trim() && !window.confirm('Replace the current ingredients with the ones from this page?')) return;
+      setIngredients(data.ingredients.join('\n'));
+      if (!name.trim()) setName(data.name);
+      setUrl(data.url);
+      setImportMsg({ ok: true, text: `Imported ${data.ingredients.length} ingredients — check them over, then save.` });
+    } catch (err) {
+      setImportMsg({ ok: false, text: err.message });
+    } finally {
+      setImporting(false);
+    }
+  }
 
   function submit(e) {
     e.preventDefault();
     if (!name.trim()) return;
+    const link = url.trim();
     onSave({
       ...recipe,
       name: name.trim(),
       ingredients: ingredients.split('\n').map((l) => l.trim()).filter(Boolean),
-      notes: notes.trim(),
+      url: link,
+      // Drop the notes if they were only the link, now that it has its own field.
+      notes: notes.trim() === link ? '' : notes.trim(),
     });
   }
 
   return (
     <form className="recipe-editor" onSubmit={submit}>
+      <label>
+        Recipe link <span className="hint">optional — paste a recipe page to fill in the ingredients</span>
+        <span className="link-row">
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                importFromLink();
+              }
+            }}
+            placeholder="https://…"
+          />
+          <button type="button" className="btn" onClick={importFromLink} disabled={!url.trim() || importing}>
+            {importing ? 'Importing…' : 'Import'}
+          </button>
+        </span>
+      </label>
+      {importMsg && <p className={importMsg.ok ? 'notice' : 'notice warn'}>{importMsg.text}</p>}
       <label>
         Name
         <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Sheet-pan chicken fajitas" />
@@ -31,7 +85,7 @@ function RecipeEditor({ recipe, onSave, onCancel, onDelete }) {
         <textarea rows={8} value={ingredients} onChange={(e) => setIngredients(e.target.value)} />
       </label>
       <label>
-        Notes / link
+        Notes
         <textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </label>
       <div className="form-actions">
@@ -134,8 +188,11 @@ export default function Meals({ state, update, weekStart, setWeekStart }) {
                 <li key={r.id}>
                   <button onClick={() => setEditing(r)}>
                     <span className="recipe-name">{r.name}</span>
-                    <span className="muted">{r.ingredients.length} ingredients</span>
+                    <span className="muted">{r.ingredients.length ? `${r.ingredients.length} ingredients` : 'No ingredients yet'}</span>
                   </button>
+                  {r.url && (
+                    <a className="recipe-link" href={r.url} target="_blank" rel="noreferrer" title="Open recipe page" aria-label={`Open ${r.name} recipe page`}>↗</a>
+                  )}
                 </li>
               ))}
             </ul>
