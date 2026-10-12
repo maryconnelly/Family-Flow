@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
-import { addDays } from './dates.js';
 import { AuthError, fetchEvents, getStoredToken, isConfigured, loadGis, signIn, signOut, wasConnected } from './google.js';
 
-export function useCalendar(weekStart) {
+// Loads Google Calendar events in [rangeStart, rangeEnd).
+export function useCalendar(rangeStart, rangeEnd) {
   const [token, setToken] = useState(() => getStoredToken());
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [refreshCount, setRefreshCount] = useState(0);
-  const startMs = weekStart.getTime();
+  const startMs = rangeStart.getTime();
+  const endMs = rangeEnd.getTime();
 
   // Load Google's script early so the sign-in popup opens directly from the click.
   useEffect(() => {
@@ -23,8 +24,7 @@ export function useCalendar(weekStart) {
     }
     let cancelled = false;
     setLoading(true);
-    const start = new Date(startMs);
-    fetchEvents(token, start, addDays(start, 7))
+    fetchEvents(token, new Date(startMs), new Date(endMs))
       .then((evs) => {
         if (cancelled) return;
         setEvents(evs);
@@ -39,7 +39,7 @@ export function useCalendar(weekStart) {
     return () => {
       cancelled = true;
     };
-  }, [token, startMs, refreshCount]);
+  }, [token, startMs, endMs, refreshCount]);
 
   const connect = useCallback(async () => {
     setError(null);

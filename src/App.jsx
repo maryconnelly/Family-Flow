@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useStore } from './store.js';
 import { useCalendar } from './useCalendar.js';
-import { startOfWeek } from './dates.js';
-import WeekView from './components/WeekView.jsx';
+import { addDays, monthGrid, startOfMonth, startOfWeek } from './dates.js';
+import CalendarTab from './components/CalendarTab.jsx';
 import Todos from './components/Todos.jsx';
 import Meals from './components/Meals.jsx';
 import Groceries from './components/Groceries.jsx';
 
 const TABS = [
-  ['week', 'Week'],
+  ['week', 'Calendar'],
   ['todos', 'To-dos'],
   ['meals', 'Meals'],
   ['groceries', 'Groceries'],
@@ -19,11 +19,39 @@ const tabFromHash = () => {
   return TABS.some(([id]) => id === hash) ? hash : 'week';
 };
 
+const VIEW_KEY = 'ff.calendarView';
+
+function readView() {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'month' ? 'month' : 'week';
+  } catch {
+    return 'week';
+  }
+}
+
 export default function App() {
   const { state, update, error } = useStore();
   const [tab, setTab] = useState(tabFromHash);
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
-  const calendar = useCalendar(weekStart);
+  const [monthStart, setMonthStart] = useState(() => startOfMonth(new Date()));
+  const [view, setViewState] = useState(readView);
+
+  const setView = (next) => {
+    setViewState(next);
+    try {
+      localStorage.setItem(VIEW_KEY, next);
+    } catch {
+      // Not remembered across reloads; that's fine.
+    }
+  };
+
+  // Fetch events for whatever the calendar tab is showing (the week also drives Meals/Groceries).
+  const monthDays = monthGrid(monthStart);
+  const showingMonth = tab === 'week' && view === 'month';
+  const calendar = useCalendar(
+    showingMonth ? monthDays[0] : weekStart,
+    showingMonth ? addDays(monthDays[monthDays.length - 1], 1) : addDays(weekStart, 7),
+  );
 
   useEffect(() => {
     const onHash = () => setTab(tabFromHash());
@@ -55,7 +83,16 @@ export default function App() {
           !error && <p className="empty">Loading…</p>
         ) : (
           <>
-            {tab === 'week' && <WeekView {...props} calendar={calendar} />}
+            {tab === 'week' && (
+              <CalendarTab
+                {...props}
+                calendar={calendar}
+                view={view}
+                setView={setView}
+                monthStart={monthStart}
+                setMonthStart={setMonthStart}
+              />
+            )}
             {tab === 'todos' && <Todos {...props} />}
             {tab === 'meals' && <Meals {...props} />}
             {tab === 'groceries' && <Groceries {...props} />}

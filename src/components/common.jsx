@@ -1,5 +1,5 @@
 import { useId, useRef, useState } from 'react';
-import { addDays, fmtRange, startOfWeek, toKey } from '../dates.js';
+import { addDays, addMonths, fmtMonthYear, fmtRange, startOfMonth, startOfWeek, toKey } from '../dates.js';
 import { mealLabel } from '../meals.js';
 
 export function WeekNav({ weekStart, setWeekStart }) {
@@ -11,6 +11,20 @@ export function WeekNav({ weekStart, setWeekStart }) {
       <button className="icon-btn" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label="Next week">›</button>
       {!isThisWeek && (
         <button className="link-btn" onClick={() => setWeekStart(startOfWeek(new Date()))}>This week</button>
+      )}
+    </div>
+  );
+}
+
+export function MonthNav({ monthStart, setMonthStart }) {
+  const isThisMonth = toKey(monthStart) === toKey(startOfMonth(new Date()));
+  return (
+    <div className="week-nav">
+      <button className="icon-btn" onClick={() => setMonthStart(addMonths(monthStart, -1))} aria-label="Previous month">‹</button>
+      <span className="week-label">{fmtMonthYear(monthStart)}</span>
+      <button className="icon-btn" onClick={() => setMonthStart(addMonths(monthStart, 1))} aria-label="Next month">›</button>
+      {!isThisMonth && (
+        <button className="link-btn" onClick={() => setMonthStart(startOfMonth(new Date()))}>This month</button>
       )}
     </div>
   );
@@ -53,6 +67,15 @@ export function MealSlot({ slot, meal, recipes, onChange }) {
           onChange={(e) => setValue(e.target.value)}
           onBlur={commit}
           onKeyDown={(e) => {
+            // Tab completes a partially typed recipe name instead of leaving the field.
+            if (e.key === 'Tab' && !e.shiftKey) {
+              const typed = value.trim().toLowerCase();
+              const match = typed && recipes.find((r) => r.name.toLowerCase().startsWith(typed));
+              if (match && match.name !== value) {
+                e.preventDefault();
+                setValue(match.name);
+              }
+            }
             if (e.key === 'Enter') e.currentTarget.blur();
             if (e.key === 'Escape') {
               cancelled.current = true;
