@@ -1,6 +1,7 @@
 import { fmtTime, monthGrid, todayKey, toKey } from '../dates.js';
 import { eventsOnDay } from '../google.js';
 import { SLOTS, findMeal, mealLabel } from '../meals.js';
+import { DayWeather } from './Weather.jsx';
 
 const MAX_EVENTS = 3;
 // Jan 4, 2026 is a Sunday; used only to get localized weekday names.
@@ -8,7 +9,7 @@ const WEEKDAYS = Array.from({ length: 7 }, (_, i) =>
   new Date(2026, 0, 4 + i).toLocaleDateString(undefined, { weekday: 'short' }),
 );
 
-export default function MonthView({ state, calendar, monthStart, onOpenDay }) {
+export default function MonthView({ state, calendar, weather, monthStart, onOpenDay }) {
   const today = todayKey();
   const { meals, recipes, todos } = state;
 
@@ -31,7 +32,10 @@ export default function MonthView({ state, calendar, monthStart, onOpenDay }) {
           ].filter(Boolean).join(' ');
           return (
             <button key={key} className={classes} onClick={() => onOpenDay(day)} title="Open this week">
-              <span className="month-date">{day.getDate()}</span>
+              <span className="month-cell-head">
+                <span className="month-date">{day.getDate()}</span>
+                <DayWeather forecast={weather.days[key]} compact />
+              </span>
               {events.slice(0, MAX_EVENTS).map((ev) => (
                 <span key={ev.id} className="month-event" style={{ '--cal': ev.color, '--cal-text': ev.textColor }}>
                   {!ev.allDay && <span className="event-time">{fmtTime(ev.start)} </span>}

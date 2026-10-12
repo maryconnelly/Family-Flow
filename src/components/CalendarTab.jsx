@@ -2,6 +2,7 @@ import { startOfMonth, startOfWeek, toKey } from '../dates.js';
 import { MonthNav, WeekNav } from './common.jsx';
 import MonthView from './MonthView.jsx';
 import WeekView from './WeekView.jsx';
+import { WeatherLocation } from './Weather.jsx';
 
 function CalendarBar({ calendar }) {
   const { status, error, connect, disconnect, refresh } = calendar;
@@ -30,7 +31,7 @@ function CalendarBar({ calendar }) {
   );
 }
 
-export default function CalendarTab({ view, setView, monthStart, setMonthStart, calendar, ...props }) {
+export default function CalendarTab({ view, setView, monthStart, setMonthStart, calendar, weather, ...props }) {
   const { weekStart, setWeekStart } = props;
 
   function switchTo(next) {
@@ -67,13 +68,14 @@ export default function CalendarTab({ view, setView, monthStart, setMonthStart, 
           ) : (
             <MonthNav monthStart={monthStart} setMonthStart={setMonthStart} />
           )}
+          <WeatherLocation weather={weather} />
         </div>
         <CalendarBar calendar={calendar} />
       </div>
       {view === 'week' ? (
-        <WeekView {...props} calendar={calendar} />
+        <WeekView {...props} calendar={calendar} weather={weather} />
       ) : (
-        <MonthView {...props} calendar={calendar} monthStart={monthStart} onOpenDay={openDay} />
+        <MonthView {...props} calendar={calendar} weather={weather} monthStart={monthStart} onOpenDay={openDay} />
       )}
     </section>
   );

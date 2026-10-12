@@ -201,3 +201,16 @@ textarea { width: 100%; resize: vertical; }
   .month-cell { min-height: 64px; }
   .month-event, .month-meals, .month-more, .month-todos { display: none; }
 }
+
+/* Weather */
+.location { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+.location-form { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.location-form input { width: 160px; }
+.day-weather { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: default; }
+.wx-icon { font-size: 1.1rem; line-height: 1; }
+.wx-temp { font-weight: 600; }
+.wx-low { color: var(--muted); font-weight: 400; }
+.wx-precip { color: var(--muted); font-size: 0.78rem; }
+.day-weather.compact { gap: 3px; font-size: 0.75rem; }
+.day-weather.compact .wx-icon { font-size: 0.9rem; }
+.month-cell-head { display: flex; align-items: center; justify-content: space-between; gap: 4px; }

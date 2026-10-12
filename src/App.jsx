@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useStore } from './store.js';
 import { useCalendar } from './useCalendar.js';
+import { useWeather } from './weather.js';
 import { addDays, monthGrid, startOfMonth, startOfWeek } from './dates.js';
 import CalendarTab from './components/CalendarTab.jsx';
 import Todos from './components/Todos.jsx';
@@ -48,6 +49,7 @@ export default function App() {
   // Fetch events for whatever the calendar tab is showing (the week also drives Meals/Groceries).
   const monthDays = monthGrid(monthStart);
   const showingMonth = tab === 'week' && view === 'month';
+  const weather = useWeather();
   const calendar = useCalendar(
     showingMonth ? monthDays[0] : weekStart,
     showingMonth ? addDays(monthDays[monthDays.length - 1], 1) : addDays(weekStart, 7),
@@ -87,6 +89,7 @@ export default function App() {
               <CalendarTab
                 {...props}
                 calendar={calendar}
+                weather={weather}
                 view={view}
                 setView={setView}
                 monthStart={monthStart}

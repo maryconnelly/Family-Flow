@@ -4,6 +4,7 @@ import { eventsOnDay } from '../google.js';
 import { SLOTS, findMeal, setMeal } from '../meals.js';
 import { newId } from '../store.js';
 import { MealSlot, TodoItem } from './common.jsx';
+import { DayWeather } from './Weather.jsx';
 
 function QuickAddTodo({ onAdd }) {
   const [text, setText] = useState('');
@@ -21,7 +22,7 @@ function QuickAddTodo({ onAdd }) {
   );
 }
 
-export default function WeekView({ state, update, calendar, weekStart }) {
+export default function WeekView({ state, update, calendar, weather, weekStart }) {
   const today = todayKey();
   const { todos, recipes, meals, lists } = state;
 
@@ -43,6 +44,7 @@ export default function WeekView({ state, update, calendar, weekStart }) {
               <span className="weekday">{fmtWeekday(day)}</span>
               <span className="date">{fmtMonthDay(day)}</span>
             </header>
+            <DayWeather forecast={weather.days[key]} />
 
             {events.length > 0 && (
               <ul className="events">
