@@ -12,7 +12,7 @@ const DIST_DIR = path.join(ROOT, 'dist');
 const PORT = Number(process.env.PORT) || 3001;
 
 // Each key is a top-level array the client reads and replaces as a whole.
-const KEYS = ['lists', 'todos', 'recipes', 'meals', 'groceries'];
+const KEYS = ['lists', 'todos', 'recipes', 'meals', 'groceries', 'kids', 'chores', 'choreChecks'];
 
 function defaultState() {
   return {
@@ -21,6 +21,12 @@ function defaultState() {
     recipes: [],
     meals: [],
     groceries: [],
+    kids: [
+      { id: 'kid1', name: 'Kid 1' },
+      { id: 'kid2', name: 'Kid 2' },
+    ],
+    chores: [],
+    choreChecks: [],
   };
 }
 

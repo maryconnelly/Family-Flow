@@ -5,12 +5,14 @@ import { useWeather } from './weather.js';
 import { addDays, monthGrid, startOfMonth, startOfWeek } from './dates.js';
 import CalendarTab from './components/CalendarTab.jsx';
 import Todos from './components/Todos.jsx';
+import Chores from './components/Chores.jsx';
 import Meals from './components/Meals.jsx';
 import Groceries from './components/Groceries.jsx';
 
 const TABS = [
   ['week', 'Calendar'],
   ['todos', 'To-dos'],
+  ['chores', 'Kids'],
   ['meals', 'Meals'],
   ['groceries', 'Groceries'],
 ];
@@ -97,6 +99,7 @@ export default function App() {
               />
             )}
             {tab === 'todos' && <Todos {...props} />}
+            {tab === 'chores' && <Chores {...props} />}
             {tab === 'meals' && <Meals {...props} />}
             {tab === 'groceries' && <Groceries {...props} />}
           </>

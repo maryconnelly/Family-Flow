@@ -10,6 +10,8 @@
   --warn: #b5561f;
   --warn-soft: #fbe9dd;
   --danger: #b33a3a;
+  --kid-a: #3b78c4;
+  --kid-b: #c9692a;
   --radius: 10px;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.05);
   color-scheme: light;
@@ -30,6 +32,8 @@
     --warn: #f0a070;
     --warn-soft: #3d2a1e;
     --danger: #f08080;
+    --kid-a: #7fb0ee;
+    --kid-b: #f0a46e;
     color-scheme: dark;
   }
 }
@@ -226,3 +230,40 @@ textarea { width: 100%; resize: vertical; }
 .recipe-list li button { flex: 1; }
 .recipe-link { flex: none; padding: 6px 8px; color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--surface-2); align-self: stretch; display: flex; align-items: center; }
 .recipe-link:hover { color: var(--accent); }
+
+/* Chores */
+.kid-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 16px; align-items: start; }
+.kid-panel { --kid: var(--kid-a); border-top: 4px solid var(--kid); }
+.kid-panel.kid-b { --kid: var(--kid-b); }
+.kid-panel .title-input { color: var(--kid); }
+.kid-stats { display: flex; gap: 12px; align-items: baseline; font-size: 0.9rem; flex-wrap: wrap; }
+.all-done { color: var(--kid); font-weight: 600; }
+.chore-table { width: 100%; border-collapse: collapse; }
+.chore-table th { font-size: 0.72rem; color: var(--muted); font-weight: 500; padding: 4px 2px; text-align: center; }
+.chore-table th .dow, .chore-table th .dnum { display: block; }
+.chore-table th .dnum { font-size: 0.85rem; color: var(--text); font-weight: 600; }
+.chore-table th.chore-col { text-align: left; }
+.chore-table td { text-align: center; padding: 6px 2px; border-top: 1px solid var(--surface-2); }
+.chore-table td.chore-col { text-align: left; }
+.chore-table .today { background: var(--accent-soft); }
+.chore-table th.today .dnum { color: var(--accent); }
+.chore-table td.off::after { content: '·'; color: var(--border); }
+.chore-name { width: 100%; font-weight: 500; }
+.chore-days { font-size: 0.75rem; color: var(--muted); padding: 0 4px; }
+input.chore-check { width: 22px; height: 22px; accent-color: var(--kid); }
+input.chore-check:disabled { cursor: not-allowed; opacity: 0.35; }
+.edit-row td { background: var(--surface-2); padding: 8px; }
+.day-picker { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.day-toggles { display: flex; gap: 4px; }
+.day-toggles button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+.day-toggles button.on { background: var(--kid, var(--accent)); border-color: var(--kid, var(--accent)); color: var(--surface); }
+.add-chore { display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed var(--border); padding-top: 12px; }
+@media (max-width: 560px) {
+  .chore-table th .dow { display: none; }
+  .day-toggles button { width: 26px; height: 26px; }
+}
+.chore-table .section-row th { text-align: left; font-size: 0.78rem; font-weight: 600; color: var(--text); text-transform: uppercase; letter-spacing: 0.04em; padding: 12px 4px 4px; border-top: none; }
+.chore-table tbody tr.section-row:first-child th { padding-top: 4px; }
+.chore-edit { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.add-chore .segmented, .chore-edit .segmented { align-self: flex-start; flex-wrap: wrap; }
+.add-chore .segmented button.active, .chore-edit .segmented button.active { color: var(--kid); }
