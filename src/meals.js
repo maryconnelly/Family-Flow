@@ -1,6 +1,6 @@
 import { newId } from './store.js';
 
-export const SLOTS = ['Breakfast', 'Lunch', 'Dinner'];
+export const SLOTS = ['Dinner'];
 
 export const findMeal = (meals, date, slot) => meals.find((m) => m.date === date && m.slot === slot);
 
