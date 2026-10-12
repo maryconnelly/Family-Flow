@@ -13,7 +13,7 @@
   --radius: 10px;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.05);
   color-scheme: light;
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 15px;
 }
 
@@ -101,9 +101,10 @@ textarea { width: 100%; resize: vertical; }
 .day-head .date { color: var(--muted); font-size: 0.85rem; }
 
 .events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.event a { display: flex; flex-direction: column; padding: 4px 8px; border-left: 3px solid var(--cal, var(--accent)); background: var(--surface-2); border-radius: 4px; text-decoration: none; color: inherit; font-size: 0.85rem; }
-.event a:hover { filter: brightness(0.97); }
+.event a { display: flex; flex-direction: column; padding: 4px 8px; background: var(--cal, var(--accent)); color: var(--cal-text, var(--surface)); border-radius: 4px; text-decoration: none; font-size: 0.85rem; }
+.event a:hover { filter: brightness(0.92); }
 .event-time { color: var(--muted); font-size: 0.75rem; }
+.event .event-time, .month-event .event-time { color: inherit; opacity: 0.8; }
 .event-title { overflow: hidden; text-overflow: ellipsis; }
 
 .meals { display: flex; flex-direction: column; gap: 2px; border-top: 1px dashed var(--border); padding-top: 8px; }
@@ -192,7 +193,7 @@ textarea { width: 100%; resize: vertical; }
 .month-cell.outside .month-date, .month-cell.past .month-date { color: var(--muted); }
 .month-date { font-weight: 600; font-size: 0.85rem; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; }
 .month-cell.today .month-date { background: var(--accent); color: var(--surface); }
-.month-event { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 1px 5px; border-left: 3px solid var(--cal, var(--accent)); background: var(--surface-2); border-radius: 3px; }
+.month-event { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 1px 5px; background: var(--cal, var(--accent)); color: var(--cal-text, var(--surface)); border-radius: 3px; }
 .month-event .event-time { font-size: inherit; }
 .month-more, .month-todos { color: var(--muted); }
 .month-meals { color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

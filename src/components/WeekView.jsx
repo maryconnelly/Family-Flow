@@ -47,7 +47,7 @@ export default function WeekView({ state, update, calendar, weekStart }) {
             {events.length > 0 && (
               <ul className="events">
                 {events.map((ev) => (
-                  <li key={ev.id} className="event" style={{ '--cal': ev.color }}>
+                  <li key={ev.id} className="event" style={{ '--cal': ev.color, '--cal-text': ev.textColor }}>
                     <a href={ev.link} target="_blank" rel="noreferrer" title={`${ev.calendar}${ev.location ? ` · ${ev.location}` : ''}`}>
                       <span className="event-time">{ev.allDay ? 'All day' : fmtTime(ev.start)}</span>
                       <span className="event-title">{ev.title}</span>

@@ -33,7 +33,7 @@ export default function MonthView({ state, calendar, monthStart, onOpenDay }) {
             <button key={key} className={classes} onClick={() => onOpenDay(day)} title="Open this week">
               <span className="month-date">{day.getDate()}</span>
               {events.slice(0, MAX_EVENTS).map((ev) => (
-                <span key={ev.id} className="month-event" style={{ '--cal': ev.color }}>
+                <span key={ev.id} className="month-event" style={{ '--cal': ev.color, '--cal-text': ev.textColor }}>
                   {!ev.allDay && <span className="event-time">{fmtTime(ev.start)} </span>}
                   {ev.title}
                 </span>

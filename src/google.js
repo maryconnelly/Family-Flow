@@ -106,6 +106,7 @@ function normalize(event, cal) {
     location: event.location,
     link: event.htmlLink,
     color: cal.backgroundColor,
+    textColor: cal.foregroundColor || '#000000',
     calendar: cal.summaryOverride || cal.summary,
   };
 }
