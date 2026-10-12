@@ -239,28 +239,16 @@ textarea { width: 100%; resize: vertical; }
 .kid-panel .title-input { color: var(--kid); }
 .kid-stats { display: flex; gap: 12px; align-items: baseline; font-size: 0.9rem; flex-wrap: wrap; }
 .all-done { color: var(--kid); font-weight: 600; }
-.chore-table { width: 100%; border-collapse: collapse; }
-.chore-table th { font-size: 0.72rem; color: var(--muted); font-weight: 500; padding: 4px 2px; text-align: center; }
-.chore-table th .dow, .chore-table th .dnum { display: block; }
-.chore-table th .dnum { font-size: 0.85rem; color: var(--text); font-weight: 600; }
-.chore-table th.chore-col { text-align: left; }
-.chore-table td { text-align: center; padding: 6px 2px; border-top: 1px solid var(--surface-2); }
-.chore-table td.chore-col { text-align: left; }
-.chore-table .today { background: var(--accent-soft); }
-.chore-table th.today .dnum { color: var(--accent); }
-.chore-table td.off::after { content: '·'; color: var(--border); }
 .chore-name { width: 100%; font-weight: 500; }
 .chore-days { font-size: 0.75rem; color: var(--muted); padding: 0 4px; }
-input.chore-check { width: 22px; height: 22px; accent-color: var(--kid); }
+input.chore-check { width: 24px; height: 24px; accent-color: var(--kid); }
 input.chore-check:disabled { cursor: not-allowed; opacity: 0.35; }
-.edit-row td { background: var(--surface-2); padding: 8px; }
 .day-picker { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .day-toggles { display: flex; gap: 4px; }
 .day-toggles button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--muted); }
 .day-toggles button.on { background: var(--kid, var(--accent)); border-color: var(--kid, var(--accent)); color: var(--surface); }
 .add-chore { display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed var(--border); padding-top: 12px; }
 @media (max-width: 560px) {
-  .chore-table th .dow { display: none; }
   .day-toggles button { width: 26px; height: 26px; }
 }
 .chore-edit { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
@@ -272,11 +260,24 @@ input.chore-check:disabled { cursor: not-allowed; opacity: 0.35; }
 .move-to .done-btn { margin-left: auto; }
 
 /* Chore reordering */
-.chore-cell { display: flex; align-items: center; gap: 4px; }
 .chore-text { flex: 1; min-width: 0; }
 .drag-handle { flex: none; background: none; border: none; color: var(--muted); opacity: 0.5; cursor: grab; font-size: 1rem; padding: 4px 2px; border-radius: 4px; line-height: 1; }
 .drag-handle:hover, .drag-handle:focus-visible { opacity: 1; }
 .drag-handle:active { cursor: grabbing; }
-.chore-table tr.dragging { opacity: 0.4; }
-.chore-table tr.drop-before > td { box-shadow: inset 0 3px 0 var(--kid); }
-.chore-table tr.drop-after > td { box-shadow: inset 0 -3px 0 var(--kid); }
+.add-chore-toggle { align-self: stretch; background: none; border: 1px dashed var(--border); border-radius: 8px; padding: 8px; color: var(--kid, var(--accent)); font-weight: 600; cursor: pointer; }
+.add-chore-toggle:hover { background: var(--surface-2); border-style: solid; }
+.add-chore-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+
+/* One-day chore checklist */
+.day-label { width: 200px; white-space: nowrap; }
+.chore-list { list-style: none; margin: 0; padding: 0; }
+.chore-item { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 2px; border-bottom: 1px solid var(--surface-2); }
+.chore-item:last-child { border-bottom: none; }
+.chore-item.done .chore-name { text-decoration: line-through; color: var(--muted); }
+.chore-item.dragging { opacity: 0.4; }
+.chore-item.drop-before { box-shadow: inset 0 3px 0 var(--kid); }
+.chore-item.drop-after { box-shadow: inset 0 -3px 0 var(--kid); }
+.chore-item .chore-edit { flex-basis: 100%; background: var(--surface-2); border-radius: 8px; padding: 10px; }
+.chore-name { font-size: 1rem; }
+.not-due summary { cursor: pointer; color: var(--muted); font-size: 0.85rem; padding: 4px 0; }
+.not-due .chore-item { opacity: 0.75; }
