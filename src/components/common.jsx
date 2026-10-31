@@ -1,6 +1,7 @@
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { addDays, addMonths, fmtMonthYear, fmtRange, startOfMonth, startOfWeek, toKey } from '../dates.js';
 import { mealLabel } from '../meals.js';
+import { money, parseMoney } from '../budget.js';
 
 export function WeekNav({ weekStart, setWeekStart }) {
   const isThisWeek = toKey(weekStart) === toKey(startOfWeek(new Date()));
@@ -132,5 +133,50 @@ export function TodoItem({ todo, onToggle, onChange, onDelete, showDue = true, o
       )}
       {onDelete && <button className="icon-btn subtle" onClick={onDelete} aria-label="Delete to-do" title="Delete">×</button>}
     </li>
+  );
+}
+
+// Shows a formatted amount; on focus it becomes a plain number to edit. With `math`, "+20" / "-20" adjust the current value.
+export function AmountInput({ cents, onCommit, math = false, blankZero = false, className = '', ...rest }) {
+  const [text, setText] = useState(null);
+  const cancelled = useRef(false);
+  const ref = useRef(null);
+  const editing = text !== null;
+
+  useEffect(() => {
+    if (editing) ref.current?.select();
+  }, [editing]);
+
+  function commit() {
+    const t = text?.trim();
+    setText(null);
+    if (cancelled.current || t === undefined) return;
+    const parsed = t === '' ? 0 : parseMoney(t);
+    if (parsed === null) return;
+    const next = math && /^[+-]/.test(t) ? cents + parsed : Math.abs(parsed);
+    if (next !== cents) onCommit(next);
+  }
+
+  return (
+    <input
+      ref={ref}
+      className={`plain amount ${className}`}
+      inputMode="decimal"
+      value={editing ? text : blankZero && !cents ? '' : money(cents)}
+      onFocus={() => {
+        cancelled.current = false;
+        setText(cents ? (cents / 100).toFixed(2) : '');
+      }}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur();
+        if (e.key === 'Escape') {
+          cancelled.current = true;
+          e.currentTarget.blur();
+        }
+      }}
+      {...rest}
+    />
   );
 }

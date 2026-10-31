@@ -12,7 +12,17 @@ const DIST_DIR = path.join(ROOT, 'dist');
 const PORT = Number(process.env.PORT) || 3001;
 
 // Each key is a top-level array the client reads and replaces as a whole.
-const KEYS = ['lists', 'todos', 'recipes', 'meals', 'groceries', 'kids', 'chores', 'choreChecks'];
+const KEYS = ['lists', 'todos', 'recipes', 'meals', 'groceries', 'kids', 'chores', 'choreChecks', 'giftPeople', 'gifts',
+  'budgetAccounts', 'budgetGroups', 'budgetCategories', 'budgetAssigned', 'budgetTransactions', 'budgetPaychecks'];
+
+// Starter categories for the budget; rename or delete them in the app.
+const STARTER_BUDGET = {
+  'Bills': ['Rent / Mortgage', 'Utilities', 'Phone', 'Internet', 'Insurance'],
+  'Everyday': ['Groceries', 'Gas & Transportation', 'Household', 'Medical'],
+  'Kids': ['School', 'Activities', 'Clothes'],
+  'Fun': ['Dining Out', 'Entertainment', 'Gifts'],
+  'Savings': ['Emergency Fund', 'Vacation', 'Christmas'],
+};
 
 function defaultState() {
   return {
@@ -27,6 +37,19 @@ function defaultState() {
     ],
     chores: [],
     choreChecks: [],
+    giftPeople: [],
+    gifts: [],
+    budgetAccounts: [],
+    budgetGroups: Object.keys(STARTER_BUDGET).map((name, i) => ({ id: `group${i + 1}`, name })),
+    budgetCategories: Object.values(STARTER_BUDGET).flatMap((names, i) =>
+      names.map((name, j) => ({ id: `cat${i + 1}-${j + 1}`, groupId: `group${i + 1}`, name, target: null })),
+    ),
+    budgetAssigned: [],
+    budgetTransactions: [],
+    budgetPaychecks: [
+      { id: 'pay1', name: 'Paycheck 1', day: 1, amount: 0 },
+      { id: 'pay2', name: 'Paycheck 2', day: 15, amount: 0 },
+    ],
   };
 }
 
