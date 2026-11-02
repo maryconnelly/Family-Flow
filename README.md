@@ -1,4 +1,4 @@
-# FamilyFlow
+# Home Hub
 
 A personal planner that runs on your laptop. It puts your Google Calendar, to-dos, meal plan and grocery list in one place.
 
@@ -7,7 +7,7 @@ A personal planner that runs on your laptop. It puts your Google Calendar, to-do
 - **Meals**: plan the week and keep a recipe library with ingredients.
 - **Groceries**: a list grouped by store section. One click adds the ingredients for the week's planned recipes and combines duplicates (for example, 2 cloves of garlic + 3 cloves becomes 5 cloves).
 
-Your data is saved to `data/familyflow.json` on your computer. It isn't synced anywhere and isn't committed to git, so back up that file if it matters to you.
+Your data is saved to `data/homehub.json` on your computer. It isn't synced anywhere and isn't committed to git, so back up that file if it matters to you.
 
 ## Run it
 
@@ -24,7 +24,7 @@ Then open http://localhost:5173.
 
 The app only asks for **read-only** access to your calendars.
 
-1. Go to https://console.cloud.google.com and create a new project (e.g. "FamilyFlow").
+1. Go to https://console.cloud.google.com and create a new project (e.g. "Home Hub").
 2. **APIs & Services → Library**: search for **Google Calendar API** and click **Enable**.
 3. **Google Auth Platform → Branding** (or "OAuth consent screen"): choose **External**, give the app a name, and enter your email.
 4. **Audience**: under **Test users**, add your own Google account.

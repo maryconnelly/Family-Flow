@@ -7,13 +7,13 @@ import { ImportError, importRecipe } from './recipeImport.js';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const DATA_DIR = path.join(ROOT, 'data');
-const DATA_FILE = path.join(DATA_DIR, 'familyflow.json');
+const DATA_FILE = path.join(DATA_DIR, 'homehub.json');
 const DIST_DIR = path.join(ROOT, 'dist');
 const PORT = Number(process.env.PORT) || 3001;
 
 // Each key is a top-level array the client reads and replaces as a whole.
 const KEYS = ['lists', 'todos', 'recipes', 'meals', 'groceries', 'kids', 'chores', 'choreChecks', 'giftPeople', 'gifts',
-  'budgetAccounts', 'budgetGroups', 'budgetCategories', 'budgetAssigned', 'budgetTransactions', 'budgetPaychecks'];
+  'budgetAccounts', 'budgetGroups', 'budgetCategories', 'budgetAssigned', 'budgetTransactions', 'budgetPaychecks', 'budgetRecurring'];
 
 // Starter categories for the budget; rename or delete them in the app.
 const STARTER_BUDGET = {
@@ -46,6 +46,7 @@ function defaultState() {
     ),
     budgetAssigned: [],
     budgetTransactions: [],
+    budgetRecurring: [],
     budgetPaychecks: [
       { id: 'pay1', name: 'Paycheck 1', day: 1, amount: 0 },
       { id: 'pay2', name: 'Paycheck 2', day: 15, amount: 0 },
@@ -113,5 +114,5 @@ if (process.env.NODE_ENV === 'production' && existsSync(DIST_DIR)) {
 
 // Bind to localhost only: this is a personal app and the data never leaves your machine.
 app.listen(PORT, '127.0.0.1', () => {
-  console.log(`FamilyFlow API listening on http://localhost:${PORT} (data: ${DATA_FILE})`);
+  console.log(`Home Hub API listening on http://localhost:${PORT} (data: ${DATA_FILE})`);
 });

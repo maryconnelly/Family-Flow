@@ -76,7 +76,7 @@ async function fetchPage(url) {
       signal: controller.signal,
       redirect: 'follow',
       // An honest user agent: sites' bot protection blocks requests that claim to be Chrome but aren't.
-      headers: { 'User-Agent': 'FamilyFlow/0.1 (personal recipe import)' },
+      headers: { 'User-Agent': 'HomeHub/0.1 (personal recipe import)' },
     });
     if (res.status === 401 || res.status === 403) {
       throw new ImportError("That site blocked the request (it may need a login or block automated access). You'll need to add the ingredients by hand.");

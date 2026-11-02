@@ -73,7 +73,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>🌿 FamilyFlow</h1>
+        <h1>🏡 Home Hub</h1>
         <nav className="tabs">
           {TABS.map(([id, label]) => (
             <a key={id} href={`#${id}`} className={tab === id ? 'active' : ''}>

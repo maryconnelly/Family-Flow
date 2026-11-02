@@ -397,6 +397,8 @@ input.amount.boxed { border-color: var(--border); background: var(--surface); }
 .add-txn .payee { flex: 1; min-width: 140px; }
 .add-txn .memo { flex: 1; min-width: 100px; }
 .add-txn select { max-width: 200px; }
+.add-txn select.placeholder { color: var(--muted); }
+.add-txn select.placeholder option { color: var(--text); }
 .add-txn .money-in { width: 100px; text-align: right; }
 .register { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
 .register th { text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; padding: 6px 4px; border-bottom: 1px solid var(--border); }
@@ -409,35 +411,94 @@ input.amount.boxed { border-color: var(--border); background: var(--surface); }
 .register input.amount { width: 96px; }
 .register input.amount.inflow { color: var(--accent); }
 .register tr.uncat select { color: var(--danger); }
-
-/* Paychecks */
-.paychecks { display: flex; flex-direction: column; gap: 16px; }
-.paychecks > .hint { margin: 0; }
-.paycheck-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; align-items: start; }
-.paycheck { --pay: var(--kid-a); border-top: 4px solid var(--pay); }
-.paycheck.pay-1 { --pay: var(--kid-b); }
-.paycheck .title-input { color: var(--pay); }
-.paycheck-fields { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.9rem; }
-.paycheck-fields label { display: flex; align-items: center; gap: 6px; color: var(--muted); }
-.bill-list { list-style: none; margin: 0; padding: 0; }
-.bill { display: flex; align-items: center; gap: 8px; padding: 6px 2px; border-bottom: 1px solid var(--surface-2); flex-wrap: wrap; }
-.bill-name { flex: 1; min-width: 120px; font-weight: 500; }
-.bill-due { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--muted); }
-.bill-due input { width: 40px; text-align: center; padding: 2px 4px; }
-.bill .bill-amount { width: 100px; text-align: right; font-variant-numeric: tabular-nums; }
-span.bill-amount { padding: 2px 4px; }
-.bill-status { width: 14px; text-align: center; color: var(--caution); font-weight: 700; }
-.bill-status.funded { color: var(--accent); }
-.bill-move { display: flex; align-items: center; gap: 2px; margin-left: auto; }
-.bill-move .link-btn { font-size: 0.8rem; white-space: nowrap; }
-.bill:hover .icon-btn.subtle { opacity: 1; }
-.add-bill { align-self: flex-start; color: var(--muted); }
-.paycheck-totals { border-top: 1px solid var(--border); padding-top: 10px; }
-.left-over { color: var(--accent); }
-.paycheck .btn.primary { align-self: flex-start; }
-.unsplit .panel-head h2 { font-size: 1.05rem; }
+.register tr.pending td { font-style: italic; }
+.date-btn { font: inherit; color: inherit; background: none; border: 1px solid transparent; border-radius: 6px; padding: 4px 6px; cursor: pointer; white-space: nowrap; text-align: left; width: 140px; }
+.date-btn:hover, .date-btn.open { border-color: var(--border); }
+.add-txn .date-btn { border-color: var(--border); background: var(--surface); }
+.date-pop { position: fixed; z-index: 50; width: 260px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.18); padding: 10px; font-style: normal; }
+.date-pop-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.date-pop-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.date-pop .dow { font-size: 0.7rem; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+.date-pop-grid button { font: inherit; font-size: 0.85rem; background: none; border: none; border-radius: 6px; padding: 5px 0; color: var(--text, inherit); cursor: pointer; }
+.date-pop-grid button:hover { background: var(--surface-2); }
+.date-pop-grid button.other { color: var(--muted); opacity: 0.6; }
+.date-pop-grid button.today { font-weight: 700; color: var(--accent); }
+.date-pop-grid button.sel { background: var(--accent); color: var(--surface); }
+.date-pop-repeat { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 8px; display: flex; flex-direction: column; gap: 1px; }
+.date-pop-repeat button { font: inherit; font-size: 0.85rem; background: none; border: none; border-radius: 6px; padding: 4px 6px; text-align: left; cursor: pointer; color: inherit; display: flex; gap: 4px; }
+.date-pop-repeat button:hover { background: var(--surface-2); }
+.date-pop-repeat button.on { color: var(--accent); font-weight: 600; }
+.date-pop-repeat .check { width: 1.1em; }
+.date-pop-repeat .hint { margin: 4px 6px 0; }
+.register tr.pending input, .register tr.pending select { color: var(--muted); }
+.clear-btn { background: none; border: 1px solid transparent; border-radius: 999px; padding: 1px 8px; font-size: 0.75rem; font-weight: 600; color: var(--accent); cursor: pointer; white-space: nowrap; }
+.clear-btn:hover { border-color: var(--border); }
+.clear-btn.is-pending { background: var(--warn-soft); color: var(--warn); font-style: normal; }
+.pending-note { font-size: 0.8rem; }
+.add-txn .hint { flex-basis: 100%; margin: 0; }
+.recurring { margin: 8px 0; font-size: 0.9rem; }
+.recurring summary { cursor: pointer; color: var(--muted); font-weight: 600; }
+.recurring ul { list-style: none; margin: 6px 0 0; padding: 0; }
+.recurring li { display: flex; gap: 10px; align-items: center; padding: 4px 6px; border-bottom: 1px solid var(--surface-2); font-variant-numeric: tabular-nums; }
+.recurring li .grow { flex: 1; }
+.recurring li:hover .icon-btn.subtle { opacity: 1; }
+.recurring .inflow { color: var(--accent); }
 
 /* Target due dates */
 .target-note { display: block; font-size: 0.75rem; color: var(--caution); margin-top: 2px; }
 .target-note.overdue, .hint.overdue { color: var(--danger); font-weight: 600; }
 .bill-due select { padding: 2px 4px; font-size: 0.8rem; }
+
+/* Keep Ready to Assign and the month switcher in view while scrolling the budget */
+.budget > .toolbar { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 10px 0; margin-bottom: 4px; box-shadow: 0 6px 6px -6px rgb(0 0 0 / 0.12); }
+.cat-cell { display: flex; align-items: center; gap: 2px; }
+.split-toggle { background: none; border: none; color: var(--muted); cursor: pointer; padding: 2px 4px; font-size: 0.8rem; }
+.split-toggle:disabled { cursor: default; opacity: 0.5; }
+.register tr.has-split td { border-bottom-color: transparent; }
+.register tr.split-line td { background: var(--surface-2); }
+.register tr.split-line .split-mark { text-align: right; color: var(--muted); padding-right: 8px; }
+.register tr.split-foot td { padding: 4px 6px; font-size: 0.85rem; }
+.split-left { margin-left: 12px; color: var(--warn); }
+.add-split { flex-basis: 100%; display: flex; flex-direction: column; gap: 4px; }
+.add-split-line { display: flex; gap: 6px; align-items: center; }
+.add-split-line .split-mark { color: var(--muted); width: 140px; text-align: right; padding-right: 4px; flex-shrink: 0; }
+.add-split-foot { display: flex; gap: 12px; align-items: center; padding-left: 150px; font-size: 0.85rem; }
+.add-split-foot .split-left { margin-left: 0; }
+.add-txn .error-text { color: var(--danger); }
+@media (max-width: 640px) {
+  .add-split-line { flex-wrap: wrap; }
+  .add-split-line .split-mark { display: none; }
+  .add-split-foot { padding-left: 0; flex-wrap: wrap; }
+}
+.payee-box { display: block; }
+.payee-box input { width: 100%; box-sizing: border-box; }
+.payee-pop { position: fixed; z-index: 50; list-style: none; margin: 0; padding: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.18); font-size: 0.9rem; font-style: normal; max-height: 280px; overflow-y: auto; }
+.payee-pop li { padding: 5px 8px; border-radius: 6px; cursor: pointer; white-space: nowrap; color: var(--text); }
+.payee-pop li.active { background: var(--surface-2); }
+.payee-pop mark { background: none; color: inherit; font-weight: 700; }
+/* The Plan's side panel follows you down the page, just below the sticky toolbar, scrolling on its own if it's taller than the window. */
+@media (min-width: 861px) {
+  .budget .split.wide-main > .panel.side { position: sticky; top: calc(var(--toolbar-h, 64px) + 8px); max-height: calc(100vh - var(--toolbar-h, 64px) - 24px); overflow-y: auto; }
+}
+/* Category settings: locked until Edit, then Save or Cancel. */
+.btn.small { padding: 4px 10px; font-size: 0.8rem; }
+.inspector input.title-input.boxed { min-width: 0; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); font: inherit; font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.inspector .locked-value { color: var(--text); font-weight: 600; }
+.inspector .editing { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+.inspector .category-info { display: flex; flex-direction: column; gap: 10px; }
+.icon-btn.subtle-visible { opacity: 0.55; font-size: 0.85rem; }
+.icon-btn.subtle-visible:hover { opacity: 1; }
+.target-summary { margin: 0; font-weight: 600; }
+.settings-actions { display: flex; gap: 8px; margin-top: 12px; }
+.inspector .section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.inspector .section-head h3 { margin: 0; }
+/* Reordering categories on the Plan */
+.cat-row th { position: relative; }
+.drag-handle { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 2px 3px; color: var(--muted); font-size: 0.75rem; letter-spacing: -2px; cursor: grab; opacity: 0.45; border-radius: 4px; }
+.cat-row:hover .drag-handle, .drag-handle:focus-visible { opacity: 1; }
+.drag-handle:hover { background: var(--surface); }
+.drag-handle:active { cursor: grabbing; }
+.cat-row.dragging { opacity: 0.4; }
+.cat-row.drop-before > * { box-shadow: inset 0 2px 0 var(--accent); }
+.cat-row.drop-after > * { box-shadow: inset 0 -2px 0 var(--accent); }
+.group-row.drop-into > * { box-shadow: inset 0 -2px 0 var(--accent); background: var(--accent-soft); }
