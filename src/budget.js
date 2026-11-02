@@ -78,8 +78,10 @@ export function targetOccurrences(target, month) {
   return [];
 }
 
-// The next time a yearly date (only its month and day count) falls on or after the start of `month`.
+// The next time a yearly date falls on or after the start of `month`. The saved date is the first time it's due,
+// so a date still ahead (say, next year's registration) is used as is; once it's past, it repeats on the same month and day.
 export function nextYearly(date, month) {
+  if (monthOf(date) >= month) return date;
   const [, mm, dd] = date.split('-').map(Number);
   const year = Number(month.slice(0, 4));
   const occ = dateKey(year, mm, dd);

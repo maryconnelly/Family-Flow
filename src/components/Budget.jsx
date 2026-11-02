@@ -60,6 +60,132 @@ function CategoryOptions({ groups, categories, accounts, ownAccountId, uncategor
 
 /* ---------- Plan (the budget itself) ---------- */
 
+// A date box that only saves complete dates. Typing a year digit by digit passes through years like 0002;
+// those stay in the box without being saved, so the field doesn't jump while you type.
+function DateField({ value, onCommit, ...rest }) {
+  const [text, setText] = useState(value || '');
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
+    if (!focused) setText(value || '');
+  }, [value, focused]);
+  return (
+    <input type="date" value={text} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} {...rest}
+      onChange={(e) => {
+        setText(e.target.value);
+        if (/^(19|20)\d\d-\d\d-\d\d$/.test(e.target.value)) onCommit(e.target.value);
+      }} />
+  );
+}
+
+// The editable fields of a target. `value` holds { target, dueDay } (the due day belongs to the category but only
+// matters for monthly targets); `onChange` gets the fields that changed.
+function TargetEditor({ value, onChange, month }) {
+  const t = value.target;
+  if (!t) return <button className="btn" onClick={() => onChange({ target: { type: 'monthly', amount: 0 } })}>🎯 Add a target</button>;
+  const patchTarget = (p) => onChange({ target: { ...t, ...p } });
+  const saving = isSavingsTarget(t);
+
+  // Keep the amount when switching how often it repeats; fill in a sensible date or weekday if it needs one.
+  function changeTargetType(type) {
+    const date = type === 'biweekly' ? todayKey() : lastDayOf(shiftMonth(month, 2));
+    const keepDate = t.date && (type === 'biweekly') === (t.type === 'biweekly');
+    patchTarget({ type, date: keepDate ? t.date : date, weekday: t.weekday ?? new Date().getDay() });
+  }
+
+  return (
+    <div className="target-edit">
+      <label className="target-repeat">
+        Repeats
+        <select value={t.type} onChange={(e) => changeTargetType(e.target.value)} aria-label="How often">
+          {TARGET_TYPES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+        </select>
+      </label>
+      <div className="target-fields">
+        <label>
+          {saving ? 'Save' : 'Assign'}
+          <AmountInput cents={t.amount} onCommit={(amount) => patchTarget({ amount })} className="boxed" aria-label="Target amount" />
+        </label>
+        {t.type === 'weekly' && (
+          <label>
+            every
+            <select value={t.weekday ?? 5} onChange={(e) => patchTarget({ weekday: Number(e.target.value) })} aria-label="Day of the week">
+              {WEEKDAYS.map((name, i) => <option key={name} value={i}>{name}</option>)}
+            </select>
+          </label>
+        )}
+        {t.type === 'biweekly' && (
+          <label>
+            every other week from
+            <DateField value={t.date} onCommit={(date) => patchTarget({ date })} aria-label="Starting on" />
+          </label>
+        )}
+        {t.type === 'monthly' && (
+          <label>
+            by the
+            <select value={value.dueDay ?? ''} onChange={(e) => onChange({ dueDay: parseDay(e.target.value) })} aria-label="Due day each month">
+              <option value="">any day</option>
+              {DAY_OPTIONS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+            </select>
+          </label>
+        )}
+        {(t.type === 'yearly' || t.type === 'byDate') && (
+          <label>
+            {t.type === 'yearly' ? 'every year by' : 'by'}
+            <DateField value={targetDueDate(value, month)} onCommit={(date) => patchTarget({ date })} aria-label="Have it by" />
+          </label>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// The side panel for a category that doesn't exist yet: name, group and an optional target, created on Save.
+function NewCategoryPanel({ groups, update, month, defaultGroupId, onCancel, onCreated }) {
+  const [draft, setDraft] = useState({ name: '', groupId: defaultGroupId ?? groups[0]?.id ?? '', target: null, dueDay: null });
+  const patch = (p) => setDraft((d) => ({ ...d, ...p }));
+  const canSave = draft.name.trim() && groups.some((g) => g.id === draft.groupId);
+
+  function save() {
+    if (!canSave) return;
+    const id = newId();
+    update('budgetCategories', (cs) => [...cs, { id, name: draft.name.trim(), groupId: draft.groupId, target: draft.target, dueDay: draft.dueDay }]);
+    onCreated(id);
+  }
+
+  return (
+    <aside className="panel side inspector">
+      <div className="category-info editing">
+        <div className="panel-head">
+          <h2 className="title-input">New category</h2>
+          <button className="icon-btn subtle" onClick={onCancel} aria-label="Cancel new category" title="Cancel">×</button>
+        </div>
+        <input className="title-input boxed" value={draft.name} placeholder="Category name" aria-label="Category name" autoFocus
+          onChange={(e) => patch({ name: e.target.value })}
+          onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') onCancel(); }} />
+        <label className="group-move">
+          Group
+          {groups.length ? (
+            <select value={draft.groupId} onChange={(e) => patch({ groupId: e.target.value })}>
+              {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+            </select>
+          ) : (
+            <span className="hint">Add a category group first (below the budget).</span>
+          )}
+        </label>
+      </div>
+      <div className="inspector-section target-section editing">
+        <div className="section-head"><h3>Target <span className="muted">(optional)</span></h3></div>
+        <TargetEditor value={draft} onChange={patch} month={month} />
+      </div>
+      <div className="settings-actions">
+        <button className="btn primary" onClick={save} disabled={!canSave}>Save category</button>
+        <button className="btn" onClick={onCancel}>Cancel</button>
+        {draft.target && <button className="btn danger" onClick={() => patch({ target: null })}>Remove target</button>}
+      </div>
+    </aside>
+  );
+}
+
 function Inspector({ state, update, budget, month, cat, onClose }) {
   const { budgetCategories: categories, budgetGroups: groups } = state;
   const [moving, setMoving] = useState(false); // the move-money inputs show only after clicking Move money
@@ -84,9 +210,13 @@ function Inspector({ state, update, budget, month, cat, onClose }) {
   const shown = editing ? { ...cat, ...draft } : cat;
   const startEditing = (changes = {}) => setDraft({ dueDay: cat.dueDay ?? null, target: cat.target ?? null, ...changes });
   const patch = (p) => setDraft((d) => ({ ...d, ...p }));
-  const patchTarget = (p) => patch({ target: { ...shown.target, ...p } });
   function save() {
     saveCategory(draft);
+    setDraft(null);
+  }
+  function deleteTarget() {
+    if (!window.confirm(`Delete the target for "${cat.name}"? The money already in it stays.`)) return;
+    saveCategory({ target: null });
     setDraft(null);
   }
 
@@ -133,16 +263,8 @@ function Inspector({ state, update, budget, month, cat, onClose }) {
   const progress = targetProgress(cat, row);
   const due = targetDueDate(cat, month);
   const pastDue = row.underfunded > 0 && isPastDue(due);
-  const saving = isSavingsTarget(shown.target);
+  const saving = isSavingsTarget(cat.target);
   const occurrences = cat.target && ['weekly', 'biweekly'].includes(cat.target.type) && targetOccurrences(cat.target, month).length;
-  const t = shown.target;
-
-  // Keep the amount when switching how often it repeats; fill in a sensible date or weekday if it needs one.
-  function changeTargetType(type) {
-    const date = type === 'biweekly' ? todayKey() : lastDayOf(shiftMonth(month, 2));
-    const keepDate = t.date && (type === 'biweekly') === (t.type === 'biweekly');
-    patchTarget({ type, date: keepDate ? t.date : date, weekday: t.weekday ?? new Date().getDay() });
-  }
 
   // The saved target in words, e.g. "Assign $200.00 each month by the 15th".
   function describeTarget() {
@@ -225,54 +347,7 @@ function Inspector({ state, update, budget, month, cat, onClose }) {
           {!editing && cat.target && <button className="btn small" onClick={() => startEditing()} title="Edit the target">✏️ Edit</button>}
         </div>
         {editing ? (
-          !t ? (
-            <button className="btn" onClick={() => patch({ target: { type: 'monthly', amount: 0 } })}>🎯 Add a target</button>
-          ) : (
-            <div className="target-edit">
-              <label className="target-repeat">
-                Repeats
-                <select value={t.type} onChange={(e) => changeTargetType(e.target.value)} aria-label="How often">
-                  {TARGET_TYPES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-                </select>
-              </label>
-              <div className="target-fields">
-                <label>
-                  {saving ? 'Save' : 'Assign'}
-                  <AmountInput cents={t.amount} onCommit={(amount) => patchTarget({ amount })} className="boxed" aria-label="Target amount" />
-                </label>
-                {t.type === 'weekly' && (
-                  <label>
-                    every
-                    <select value={t.weekday ?? 5} onChange={(e) => patchTarget({ weekday: Number(e.target.value) })} aria-label="Day of the week">
-                      {WEEKDAYS.map((name, i) => <option key={name} value={i}>{name}</option>)}
-                    </select>
-                  </label>
-                )}
-                {t.type === 'biweekly' && (
-                  <label>
-                    every other week from
-                    <input type="date" value={t.date || ''} onChange={(e) => e.target.value && patchTarget({ date: e.target.value })} aria-label="Starting on" />
-                  </label>
-                )}
-                {t.type === 'monthly' && (
-                  <label>
-                    by the
-                    <select value={shown.dueDay ?? ''} onChange={(e) => patch({ dueDay: parseDay(e.target.value) })} aria-label="Due day each month">
-                      <option value="">any day</option>
-                      {DAY_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                    </select>
-                  </label>
-                )}
-                {(t.type === 'yearly' || t.type === 'byDate') && (
-                  <label>
-                    {t.type === 'yearly' ? 'every year by' : 'by'}
-                    <input type="date" value={targetDueDate(shown, month) || ''} onChange={(e) => e.target.value && patchTarget({ date: e.target.value })} aria-label="Have it by" />
-                  </label>
-                )}
-              </div>
-              <button className="link-btn danger" onClick={() => patch({ target: null })}>Remove target</button>
-            </div>
-          )
+          <TargetEditor value={shown} onChange={patch} month={month} />
         ) : !cat.target ? (
           <button className="btn" onClick={() => startEditing({ target: { type: 'monthly', amount: 0 } })}>🎯 Create a target</button>
         ) : (
@@ -302,13 +377,15 @@ function Inspector({ state, update, budget, month, cat, onClose }) {
           <div className="settings-actions">
             <button className="btn primary" onClick={save}>Save</button>
             <button className="btn" onClick={() => setDraft(null)}>Cancel</button>
+            {cat.target && <button className="btn danger" onClick={deleteTarget}>Delete target</button>}
           </div>
         )}
       </div>
 
       {!moving ? (
-        <div className="inspector-section">
+        <div className="inspector-section settings-actions">
           <button className="btn" onClick={() => setMoving(true)}>↔ Move money</button>
+          <button className="btn danger" onClick={deleteCategory}>Delete category</button>
         </div>
       ) : (
       <form className="inspector-section" onSubmit={moveMoney} onKeyDown={(e) => e.key === 'Escape' && closeMove()}>
@@ -338,7 +415,6 @@ function Inspector({ state, update, budget, month, cat, onClose }) {
       </form>
       )}
 
-      <button className="link-btn danger delete-cat" onClick={deleteCategory}>Delete category</button>
     </aside>
   );
 }
@@ -431,9 +507,11 @@ function MonthSummary({ budget, balances, accounts, goToAccounts }) {
   );
 }
 
-function Plan({ state, update, month, budget, balances, goToAccounts }) {
+function Plan({ state, update, month, budget, balances, goToAccounts, creating, setCreating }) {
   const { budgetGroups: groups, budgetCategories: categories } = state;
-  const [selectedId, setSelectedId] = useState(null);
+  const [selectedId, setSelectedIdRaw] = useState(null);
+  // Picking a category (or closing its panel) also leaves "new category" mode.
+  const setSelectedId = (id) => { setSelectedIdRaw(id); setCreating(false); };
   const [collapsed, setCollapsed] = useState(() => new Set());
   const [addingTo, setAddingTo] = useState(null);
   const [newCat, setNewCat] = useState('');
@@ -679,7 +757,10 @@ function Plan({ state, update, month, budget, balances, goToAccounts }) {
         <p className="hint">Tip: type <code>+50</code> or <code>-20</code> in Assigned to add to or take from what's there.</p>
       </div>
 
-      {selectedCard ? (
+      {creating ? (
+        <NewCategoryPanel groups={groups} update={update} month={month} defaultGroupId={selected?.groupId}
+          onCancel={() => setCreating(false)} onCreated={setSelectedId} />
+      ) : selectedCard ? (
         <CardInspector key={selectedCard.id} update={update} budget={budget} month={month} card={selectedCard} onClose={() => setSelectedId(null)} />
       ) : selected ? (
         <Inspector key={selected.id} state={state} update={update} budget={budget} month={month} cat={selected} onClose={() => setSelectedId(null)} />
@@ -1349,6 +1430,7 @@ export default function Budget({ state, update }) {
   const budget = computeBudget(state, month);
   const balances = accountBalances(state.budgetAccounts, state.budgetTransactions);
   const rta = budget.readyToAssign;
+  const [creatingCategory, setCreatingCategory] = useState(false);
 
   // The Plan's side panel sticks just below the toolbar, which can wrap to more than one line; keep its height in a CSS variable.
   const toolbar = useRef(null);
@@ -1402,6 +1484,9 @@ export default function Budget({ state, update }) {
                 🎯 Fund targets ({money(budget.underfunded)})
               </button>
             )}
+            {section === 'plan' && (
+              <button className="btn" onClick={() => setCreatingCategory(true)} aria-pressed={creatingCategory}>+ Add category</button>
+            )}
             <div className={`rta ${rta < 0 ? 'neg' : rta > 0 ? 'pos' : 'zero'}`}>
               <strong>{money(rta)}</strong>
               <span>{rta < 0 ? 'Assigned more than you have' : rta > 0 ? 'Ready to Assign' : 'All money assigned'}</span>
@@ -1411,7 +1496,8 @@ export default function Budget({ state, update }) {
       </div>
 
       {section === 'plan' && (
-        <Plan state={state} update={update} month={month} budget={budget} balances={balances} goToAccounts={() => setSection('accounts')} />
+        <Plan state={state} update={update} month={month} budget={budget} balances={balances} goToAccounts={() => setSection('accounts')}
+          creating={creatingCategory} setCreating={setCreatingCategory} />
       )}
       {section === 'accounts' && <Accounts state={state} update={update} balances={balances} />}
     </div>
