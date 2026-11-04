@@ -150,7 +150,8 @@ function targetNeed(target, month, carry) {
 export function targetProgress(cat, row) {
   const { target } = cat;
   if (!target?.amount) return null;
-  const [funded, goal] = isSavingsTarget(target) ? [row.available, target.amount] : [row.assigned, row.needed];
+  // Regular targets count what came over from last month plus what's assigned now, against this month's full amount.
+  const [funded, goal] = isSavingsTarget(target) ? [row.available, target.amount] : [row.carry + row.assigned, row.goal];
   return goal ? Math.max(0, Math.min(1, funded / goal)) : 1;
 }
 
@@ -289,7 +290,10 @@ export function computeBudget(state, month) {
 
   for (const cat of categories) {
     const row = rows[cat.id];
-    row.needed = targetNeed(cat.target, month, row.carry);
+    // goal: what the target is for this month. needed: what has to be assigned this month to reach it. Savings
+    // targets already spread what's missing after the leftover; regular ones count the leftover toward the goal.
+    row.goal = targetNeed(cat.target, month, row.carry);
+    row.needed = isSavingsTarget(cat.target) ? row.goal : Math.max(0, row.goal - row.carry);
     row.underfunded = Math.max(0, row.needed - row.assigned);
   }
 

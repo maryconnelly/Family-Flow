@@ -504,3 +504,47 @@ input.amount.boxed { border-color: var(--border); background: var(--surface); }
 .btn.danger { background: var(--danger); border-color: var(--danger); color: var(--surface); }
 .btn.danger:hover { filter: brightness(1.08); background: var(--danger); }
 .inspector-section.settings-actions { margin-top: 0; }
+/* Reordering groups */
+.drag-handle.group-handle { position: static; transform: none; opacity: 0.45; }
+.group-row:hover .drag-handle.group-handle, .drag-handle.group-handle:focus-visible { opacity: 1; }
+tbody.dragging { opacity: 0.4; }
+tbody.group-drop-before > tr:first-child > * { box-shadow: inset 0 3px 0 var(--accent); }
+tbody.group-drop-after > tr:last-child > * { box-shadow: inset 0 -3px 0 var(--accent); }
+.cat-name:hover { text-decoration: underline dotted; text-underline-offset: 3px; }
+.inline-name { font: inherit; padding: 1px 6px; margin-left: -7px; border: 1px solid var(--accent); border-radius: 6px; background: var(--surface); color: var(--text); width: min(100%, 260px); }
+.clickable-name { cursor: text; }
+.clickable-name:hover { text-decoration: underline dotted; text-underline-offset: 4px; }
+/* Family events on the hub's own calendar */
+.family-legend { display: flex; gap: 14px; flex-wrap: wrap; margin: -4px 0 10px; font-size: 0.8rem; color: var(--muted); }
+.legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+.event > button { display: flex; flex-direction: column; width: 100%; padding: 4px 8px; background: var(--cal, var(--accent)); color: var(--cal-text, var(--surface)); border: none; border-radius: 4px; font: inherit; font-size: 0.85rem; text-align: left; cursor: pointer; }
+.event > button:hover { filter: brightness(0.92); }
+.add-event { align-self: flex-start; background: none; border: none; padding: 0; color: var(--muted); font: inherit; font-size: 0.8rem; cursor: pointer; margin-top: -8px; }
+.add-event:hover { color: var(--accent); }
+.person-picker { display: flex; flex-wrap: wrap; gap: 4px; }
+.person-picker button { border: 2px solid var(--person); background: var(--surface); color: var(--person); border-radius: 999px; padding: 1px 9px; font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.person-picker button.on { background: var(--person); color: #fff; }
+.event-form-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+/* Event pop-up */
+.dialog-backdrop { position: fixed; inset: 0; z-index: 100; background: rgb(0 0 0 / 0.35); display: flex; align-items: flex-start; justify-content: center; padding: 8vh 16px 16px; overflow-y: auto; }
+.dialog { background: var(--surface); color: var(--text); border-radius: 12px; box-shadow: 0 16px 48px rgb(0 0 0 / 0.3); padding: 18px; width: min(100%, 460px); }
+.event-dialog { display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem; }
+.event-dialog .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.event-title-input { font: inherit; font-size: 1.25rem; padding: 6px 2px; border: none; border-bottom: 2px solid var(--border); background: none; color: var(--text); width: 100%; }
+.event-title-input:focus { outline: none; border-bottom-color: var(--accent); }
+.event-dialog select { max-width: 100%; }
+.custom-repeat { display: flex; flex-direction: column; gap: 10px; padding: 12px; background: var(--surface-2); border-radius: 8px; }
+.custom-repeat input[type='number'] { width: 60px; }
+.custom-repeat .hint { margin: 0; }
+.day-toggles { display: flex; gap: 4px; }
+.day-toggles button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+.day-toggles button.on { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.event-dialog fieldset { border: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.event-dialog legend { font-weight: 600; margin-bottom: 4px; padding: 0; }
+.event-dialog fieldset label { display: flex; align-items: center; gap: 6px; }
+.event-dialog .scope { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; }
+.ends input[type='date'] { width: auto; }
+.ends input[type='number'] { width: 70px; }
+.ends input:disabled { opacity: 0.5; }
+.dup-note { margin: 0; }

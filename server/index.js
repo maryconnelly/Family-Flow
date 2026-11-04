@@ -13,7 +13,7 @@ const PORT = Number(process.env.PORT) || 3001;
 
 // Each key is a top-level array the client reads and replaces as a whole.
 const KEYS = ['lists', 'todos', 'recipes', 'meals', 'groceries', 'kids', 'chores', 'choreChecks', 'giftPeople', 'gifts',
-  'budgetAccounts', 'budgetGroups', 'budgetCategories', 'budgetAssigned', 'budgetTransactions', 'budgetPaychecks', 'budgetRecurring'];
+  'budgetAccounts', 'budgetGroups', 'budgetCategories', 'budgetAssigned', 'budgetTransactions', 'budgetPaychecks', 'budgetRecurring', 'events'];
 
 // Starter categories for the budget; rename or delete them in the app.
 const STARTER_BUDGET = {
@@ -47,6 +47,7 @@ function defaultState() {
     budgetAssigned: [],
     budgetTransactions: [],
     budgetRecurring: [],
+    events: [], // events added on the hub's own calendar
     budgetPaychecks: [
       { id: 'pay1', name: 'Paycheck 1', day: 1, amount: 0 },
       { id: 'pay2', name: 'Paycheck 2', day: 15, amount: 0 },

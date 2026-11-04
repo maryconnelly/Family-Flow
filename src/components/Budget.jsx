@@ -60,6 +60,25 @@ function CategoryOptions({ groups, categories, accounts, ownAccountId, uncategor
 
 /* ---------- Plan (the budget itself) ---------- */
 
+// A name that's being renamed in place: Enter or clicking away saves, Escape puts it back. A blank name isn't saved.
+function InlineName({ value, onSave, onDone }) {
+  const [text, setText] = useState(value);
+  const cancelled = useRef(false);
+  function finish() {
+    const name = text.trim();
+    if (!cancelled.current && name && name !== value) onSave(name);
+    onDone();
+  }
+  return (
+    <input className="inline-name" value={text} autoFocus aria-label="Category name" onFocus={(e) => e.target.select()}
+      onChange={(e) => setText(e.target.value)} onBlur={finish} onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur();
+        if (e.key === 'Escape') { cancelled.current = true; e.currentTarget.blur(); }
+      }} />
+  );
+}
+
 // A date box that only saves complete dates. Typing a year digit by digit passes through years like 0002;
 // those stay in the box without being saved, so the field doesn't jump while you type.
 function DateField({ value, onCommit, ...rest }) {
@@ -288,7 +307,7 @@ function Inspector({ state, update, budget, month, cat, onClose }) {
               onKeyDown={(e) => { if (e.key === 'Enter') saveInfo(); if (e.key === 'Escape') setInfo(null); }} />
           ) : (
             <>
-              <h2 className="title-input">{cat.name}</h2>
+              <h2 className="title-input clickable-name" title="Click to rename" onClick={() => setInfo({ name: cat.name, groupId: cat.groupId })}>{cat.name}</h2>
               <button className="icon-btn subtle-visible" onClick={() => setInfo({ name: cat.name, groupId: cat.groupId })}
                 aria-label="Edit name and group" title="Edit name and group">✏️</button>
             </>
@@ -367,7 +386,8 @@ function Inspector({ state, update, budget, month, cat, onClose }) {
                       ? '🎉 Fully funded!'
                       : '✓ On track this month.'}
                   {saving && ` Needs ${money(row.needed)}/month.`}
-                  {occurrences && ` ${occurrences} × ${money(cat.target.amount)} = ${money(row.needed)} this month.`}
+                  {occurrences && ` ${occurrences} × ${money(cat.target.amount)} = ${money(row.goal)} this month.`}
+                  {!saving && row.carry > 0 && row.goal > 0 && ` ${money(Math.min(row.carry, row.goal))} of it came over from last month.`}
                 </p>
               </>
             )}
@@ -569,10 +589,53 @@ function Plan({ state, update, month, budget, balances, goToAccounts, creating, 
     }
   }
 
+  const [renamingId, setRenamingId] = useState(null); // the category whose name is being typed over in the table
   const [armed, setArmed] = useState(null); // a row becomes draggable only while its handle is held, so inputs still select text
   const [dragId, setDragId] = useState(null);
   const [drop, setDrop] = useState(null); // { id, pos: 'before' | 'after' } over a category, or { groupId } over a group heading
   const endDrag = () => { setArmed(null); setDragId(null); setDrop(null); };
+
+  // Groups reorder the same way, by the handle on their heading. Hovering anywhere over a group (heading or
+  // categories) drops before or after it, depending on which half of it you're over.
+  const [armedGroup, setArmedGroup] = useState(null);
+  const [dragGroup, setDragGroup] = useState(null);
+  const [groupDrop, setGroupDrop] = useState(null); // { id, pos: 'before' | 'after' }
+  const endGroupDrag = () => { setArmedGroup(null); setDragGroup(null); setGroupDrop(null); };
+
+  function moveGroup(id, beforeId) {
+    update('budgetGroups', (gs) => {
+      const moving = gs.find((g) => g.id === id);
+      const rest = gs.filter((g) => g.id !== id);
+      const at = beforeId ? rest.findIndex((g) => g.id === beforeId) : -1;
+      rest.splice(at < 0 ? rest.length : at, 0, moving);
+      return rest;
+    });
+  }
+
+  function moveGroupBy(g, dir) {
+    const i = groups.findIndex((x) => x.id === g.id);
+    if (dir < 0 && i > 0) moveGroup(g.id, groups[i - 1].id);
+    if (dir > 0 && i < groups.length - 1) moveGroup(g.id, groups[i + 2]?.id ?? null);
+  }
+
+  function overGroup(e, g) {
+    if (!dragGroup) return;
+    e.preventDefault();
+    const r = e.currentTarget.getBoundingClientRect();
+    const pos = e.clientY < r.top + r.height / 2 ? 'before' : 'after';
+    if (groupDrop?.id !== g.id || groupDrop.pos !== pos) setGroupDrop({ id: g.id, pos });
+  }
+
+  function dropGroup(e, g) {
+    if (!dragGroup) return;
+    e.preventDefault();
+    if (dragGroup !== g.id && groupDrop) {
+      const rest = groups.filter((x) => x.id !== dragGroup);
+      const beforeId = groupDrop.pos === 'before' ? g.id : rest[rest.findIndex((x) => x.id === g.id) + 1]?.id ?? null;
+      moveGroup(dragGroup, beforeId);
+    }
+    endGroupDrag();
+  }
 
   function overCategory(e, c) {
     if (!dragId) return;
@@ -667,12 +730,21 @@ function Plan({ state, update, month, budget, balances, goToAccounts, creating, 
               const sum = (f) => cats.reduce((s, c) => s + budget.rows[c.id][f], 0);
               const isCollapsed = collapsed.has(g.id);
               return (
-                <tbody key={g.id}>
+                <tbody key={g.id} onDragOver={(e) => overGroup(e, g)} onDrop={(e) => dropGroup(e, g)}
+                  className={[dragGroup === g.id && 'dragging', groupDrop?.id === g.id && dragGroup !== g.id && `group-drop-${groupDrop.pos}`].filter(Boolean).join(' ')}>
                   <tr className={`group-row ${drop?.groupId === g.id ? 'drop-into' : ''}`}
+                    draggable={armedGroup === g.id}
+                    onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', g.id); setDragGroup(g.id); }}
+                    onDragEnd={endGroupDrag}
                     onDragOver={(e) => { if (!dragId) return; e.preventDefault(); if (drop?.groupId !== g.id) setDrop({ groupId: g.id }); }}
-                    onDrop={(e) => dropOnGroup(e, g)}>
+                    onDrop={(e) => { if (dragId) dropOnGroup(e, g); }}>
                     <th>
                       <div className="group-name">
+                        <button className="drag-handle group-handle" aria-label={`Move the ${g.name} group (drag, or use the up and down arrow keys)`} title="Drag to reorder group"
+                          onMouseDown={() => setArmedGroup(g.id)} onMouseUp={() => !dragGroup && setArmedGroup(null)}
+                          onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); moveGroupBy(g, e.key === 'ArrowUp' ? -1 : 1); } }}>
+                          ⋮⋮
+                        </button>
                         <button className="collapse-btn" onClick={() => toggleGroup(g.id)} aria-expanded={!isCollapsed} aria-label={`${isCollapsed ? 'Expand' : 'Collapse'} ${g.name}`}>
                           {isCollapsed ? '▸' : '▾'}
                         </button>
@@ -714,7 +786,12 @@ function Plan({ state, update, month, budget, balances, goToAccounts, creating, 
                             onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); moveBy(c, e.key === 'ArrowUp' ? -1 : 1); } }}>
                             ⋮⋮
                           </button>
-                          <button className="cat-name" onClick={() => setSelectedId(c.id)}>{c.name}</button>
+                          {renamingId === c.id ? (
+                            <InlineName value={c.name} onDone={() => setRenamingId(null)}
+                              onSave={(name) => update('budgetCategories', (cs) => cs.map((x) => (x.id === c.id ? { ...x, name } : x)))} />
+                          ) : (
+                            <button className="cat-name" title="Click to rename" onClick={(e) => { e.stopPropagation(); setSelectedId(c.id); setRenamingId(c.id); }}>{c.name}</button>
+                          )}
                           {progress !== null && (
                             <span className={`target-bar ${row.underfunded ? 'under' : ''}`} title={row.underfunded ? `${money(row.underfunded)} underfunded` : 'Target on track'}>
                               <span style={{ width: `${progress * 100}%` }} />

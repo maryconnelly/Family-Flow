@@ -1,8 +1,9 @@
-import { startOfMonth, startOfWeek, toKey } from '../dates.js';
+import { addDays, monthGrid, startOfMonth, startOfWeek, toKey } from '../dates.js';
 import { MonthNav, WeekNav } from './common.jsx';
 import MonthView from './MonthView.jsx';
 import WeekView from './WeekView.jsx';
 import { WeatherLocation } from './Weather.jsx';
+import { FAMILY, hubCalendarEvents } from '../family.js';
 
 function CalendarBar({ calendar }) {
   const { status, error, connect, disconnect, refresh } = calendar;
@@ -31,8 +32,12 @@ function CalendarBar({ calendar }) {
   );
 }
 
-export default function CalendarTab({ view, setView, monthStart, setMonthStart, calendar, weather, ...props }) {
+export default function CalendarTab({ view, setView, monthStart, setMonthStart, calendar: google, weather, ...props }) {
   const { weekStart, setWeekStart } = props;
+  // Show events added on the hub alongside the ones from Google Calendar.
+  const first = view === 'week' ? weekStart : monthGrid(monthStart)[0];
+  const hub = hubCalendarEvents(props.state.events, toKey(first), toKey(addDays(first, 42)));
+  const calendar = { ...google, events: [...google.events, ...hub] };
 
   function switchTo(next) {
     if (next === view) return;
@@ -70,7 +75,12 @@ export default function CalendarTab({ view, setView, monthStart, setMonthStart, 
           )}
           <WeatherLocation weather={weather} />
         </div>
-        <CalendarBar calendar={calendar} />
+        <CalendarBar calendar={google} />
+      </div>
+      <div className="family-legend" aria-label="Event colors">
+        {FAMILY.map((m) => (
+          <span key={m.id} className="legend-item"><span className="legend-dot" style={{ background: m.color }} />{m.name}</span>
+        ))}
       </div>
       {view === 'week' ? (
         <WeekView {...props} calendar={calendar} weather={weather} />
