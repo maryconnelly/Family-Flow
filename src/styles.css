@@ -222,8 +222,9 @@ textarea { width: 100%; resize: vertical; }
 .location-form input { width: 160px; }
 .day-weather { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: default; }
 .wx-icon { font-size: 1.1rem; line-height: 1; }
+.wx-temps { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
 .wx-temp { font-weight: 600; }
-.wx-low { color: var(--muted); font-weight: 400; }
+.wx-low { color: var(--muted); font-weight: 400; font-size: 0.85em; }
 .wx-precip { color: var(--muted); font-size: 0.78rem; }
 .day-weather.compact { gap: 3px; font-size: 0.75rem; }
 .day-weather.compact .wx-icon { font-size: 0.9rem; }

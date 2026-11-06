@@ -60,8 +60,9 @@ export function DayWeather({ forecast, compact = false }) {
   return (
     <span className={`day-weather ${compact ? 'compact' : ''}`} title={title}>
       <span className="wx-icon" aria-hidden="true">{icon}</span>
-      <span className="wx-temp">
-        {high}°{!compact && <span className="wx-low"> / {low}°</span>}
+      <span className="wx-temps">
+        <span className="wx-temp">{high}°</span>
+        <span className="wx-low">{low}°</span>
       </span>
       {!compact && precip >= 30 && <span className="wx-precip">💧{precip}%</span>}
     </span>
