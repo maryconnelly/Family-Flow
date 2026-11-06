@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { addDays, addMonths, fmtMonthYear, fromKey, monthGrid, startOfMonth, todayKey, toKey } from '../dates.js';
 import { newId } from '../store.js';
-import { AmountInput, MonthNav } from './common.jsx';
+import { AmountInput, CalculatorButton, MonthNav } from './common.jsx';
 import {
   DAY_OPTIONS, ordinal, RTA, SPLIT, UNCAT, accountBalances, splitRemainder, computeBudget, fmtDue, isPastDue, lastDayOf, money, monthOf, parseDay, parseMoney,
   setAssigned, shiftMonth, targetDueDate, targetProgress, TARGET_TYPES, isSavingsTarget, targetOccurrences, isPaymentId, paymentId,
@@ -527,7 +527,7 @@ function MonthSummary({ budget, balances, accounts, goToAccounts }) {
   );
 }
 
-function Plan({ state, update, month, budget, balances, goToAccounts, creating, setCreating }) {
+function Plan({ state, update, month, budget, balances, goToAccounts, creating, setCreating, onlyOverspent, setOnlyOverspent }) {
   const { budgetGroups: groups, budgetCategories: categories } = state;
   const [selectedId, setSelectedIdRaw] = useState(null);
   // Picking a category (or closing its panel) also leaves "new category" mode.
@@ -693,7 +693,19 @@ function Plan({ state, update, month, budget, balances, goToAccounts, creating, 
             <thead>
               <tr><th>Category</th><th>Assigned</th><th>Activity</th><th>Available</th></tr>
             </thead>
-            {cards.length > 0 && (
+            {onlyOverspent && (
+              <tbody>
+                <tr className="filter-row">
+                  <td colSpan={4}>
+                    <div className="filter-bar">
+                      <span>⚠️ Showing only overspent categories. Assign money to cover them, or move money from another category.</span>
+                      <button className="btn small" onClick={() => setOnlyOverspent(false)}>Show all</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            )}
+            {cards.length > 0 && !onlyOverspent && (
               <tbody>
                 <tr className="group-row">
                   <th><div className="group-name"><span className="collapse-btn" aria-hidden="true">💳</span><span>Credit Card Payments</span></div></th>
@@ -715,8 +727,10 @@ function Plan({ state, update, month, budget, balances, goToAccounts, creating, 
                         </span>
                       </th>
                       <td onClick={(e) => e.stopPropagation()}>
-                        <AmountInput cents={row.assigned} math onCommit={(v) => assign(id, v)} aria-label={`Assigned to ${a.name} payment`}
-                          onFocusCapture={() => setSelectedId(id)} />
+                        <div className="assign-cell" onFocusCapture={() => setSelectedId(id)}>
+                          <CalculatorButton cents={row.assigned} onCommit={(v) => assign(id, v)} label={`${a.name} payment`} />
+                          <AmountInput cents={row.assigned} math onCommit={(v) => assign(id, v)} aria-label={`Assigned to ${a.name} payment`} />
+                        </div>
                       </td>
                       <td className="activity">{money(row.activity)}</td>
                       <td><span className={`avail-pill ${availableClass(null, row)}`}>{money(row.available)}</span></td>
@@ -728,7 +742,9 @@ function Plan({ state, update, month, budget, balances, goToAccounts, creating, 
             {groups.map((g) => {
               const cats = groupCats(g.id);
               const sum = (f) => cats.reduce((s, c) => s + budget.rows[c.id][f], 0);
-              const isCollapsed = collapsed.has(g.id);
+              const isCollapsed = collapsed.has(g.id) && !onlyOverspent;
+              const shown = onlyOverspent ? cats.filter((c) => budget.rows[c.id].available < 0) : cats;
+              if (onlyOverspent && !shown.length) return null;
               return (
                 <tbody key={g.id} onDragOver={(e) => overGroup(e, g)} onDrop={(e) => dropGroup(e, g)}
                   className={[dragGroup === g.id && 'dragging', groupDrop?.id === g.id && dragGroup !== g.id && `group-drop-${groupDrop.pos}`].filter(Boolean).join(' ')}>
@@ -770,7 +786,7 @@ function Plan({ state, update, month, budget, balances, goToAccounts, creating, 
                       </td>
                     </tr>
                   )}
-                  {!isCollapsed && cats.map((c) => {
+                  {!isCollapsed && shown.map((c) => {
                     const row = budget.rows[c.id];
                     const progress = targetProgress(c, row);
                     const due = row.underfunded ? targetDueDate(c, month) : null;
@@ -804,8 +820,10 @@ function Plan({ state, update, month, budget, balances, goToAccounts, creating, 
                           )}
                         </th>
                         <td onClick={(e) => e.stopPropagation()}>
-                          <AmountInput cents={row.assigned} math onCommit={(v) => assign(c.id, v)} aria-label={`Assigned to ${c.name}`}
-                            onFocusCapture={() => setSelectedId(c.id)} />
+                          <div className="assign-cell" onFocusCapture={() => setSelectedId(c.id)}>
+                            <CalculatorButton cents={row.assigned} onCommit={(v) => assign(c.id, v)} label={c.name} />
+                            <AmountInput cents={row.assigned} math onCommit={(v) => assign(c.id, v)} aria-label={`Assigned to ${c.name}`} />
+                          </div>
                         </td>
                         <td className="activity">{money(row.activity)}</td>
                         <td><span className={`avail-pill ${availableClass(c, row)}`}>{money(row.available)}</span></td>
@@ -815,7 +833,7 @@ function Plan({ state, update, month, budget, balances, goToAccounts, creating, 
                 </tbody>
               );
             })}
-            {showUncat ? (
+            {showUncat && !onlyOverspent ? (
               <tbody>
                 <tr className="cat-row uncat">
                   <th title="Spending from categories you deleted. Recategorize these transactions.">⚠️ Uncategorized</th>
@@ -827,11 +845,11 @@ function Plan({ state, update, month, budget, balances, goToAccounts, creating, 
             ) : null}
           </table>
         </div>
-        <form onSubmit={addGroup} className="add-row">
+        {!onlyOverspent && <form onSubmit={addGroup} className="add-row">
           <input value={newGroup} onChange={(e) => setNewGroup(e.target.value)} placeholder="Add a category group…" />
           <button className="btn" type="submit">Add group</button>
-        </form>
-        <p className="hint">Tip: type <code>+50</code> or <code>-20</code> in Assigned to add to or take from what's there.</p>
+        </form>}
+        <p className="hint">Tip: click <strong>+−×÷</strong> beside an Assigned amount for a calculator, or type <code>+50</code>, <code>-20</code>, <code>*2</code> or <code>/2</code> right in the box.</p>
       </div>
 
       {creating ? (
@@ -1530,9 +1548,16 @@ export default function Budget({ state, update }) {
       const result = enterDueRecurring(rs || [], newId, today);
       entered = result.entered;
       return result.recurring;
-    });
-    if (entered.length) update('budgetTransactions', (ts) => [...ts, ...entered]);
+    }, { history: false });
+    if (entered.length) update('budgetTransactions', (ts) => [...ts, ...entered], { history: false });
   }, [state.budgetRecurring, today, update]);
+
+  const overspent = state.budgetCategories.filter((c) => budget.rows[c.id]?.available < 0);
+  const overspentTotal = overspent.reduce((s, c) => s - budget.rows[c.id].available, 0);
+  // The overspent button filters the Plan to just those categories; once they're all covered, everything shows again.
+  const [onlyOverspent, setOnlyOverspent] = useState(false);
+  if (onlyOverspent && !overspent.length) setOnlyOverspent(false);
+  const filtering = onlyOverspent && overspent.length > 0 && section === 'plan';
 
   function assignUnderfunded() {
     update('budgetAssigned', (assigned) =>
@@ -1556,6 +1581,12 @@ export default function Budget({ state, update }) {
         </div>
         {section !== 'accounts' && (
           <div className="rta-wrap">
+            {section === 'plan' && overspent.length > 0 && (
+              <button className={`btn overspent-alert ${filtering ? 'on' : ''}`} aria-pressed={filtering} onClick={() => setOnlyOverspent(!filtering)}
+                title={`${filtering ? 'Show all categories' : 'Show only overspent categories'}: ${overspent.map((c) => `${c.name} (${money(-budget.rows[c.id].available)})`).join(', ')}`}>
+                ⚠️ {overspent.length} overspent · {money(-overspentTotal)}
+              </button>
+            )}
             {section === 'plan' && budget.underfunded > 0 && (
               <button className="btn" onClick={assignUnderfunded} title="Assign what every target needs this month">
                 🎯 Fund targets ({money(budget.underfunded)})
@@ -1574,7 +1605,7 @@ export default function Budget({ state, update }) {
 
       {section === 'plan' && (
         <Plan state={state} update={update} month={month} budget={budget} balances={balances} goToAccounts={() => setSection('accounts')}
-          creating={creatingCategory} setCreating={setCreatingCategory} />
+          creating={creatingCategory} setCreating={setCreatingCategory} onlyOverspent={filtering} setOnlyOverspent={setOnlyOverspent} />
       )}
       {section === 'accounts' && <Accounts state={state} update={update} balances={balances} />}
     </div>

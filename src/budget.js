@@ -129,6 +129,48 @@ export function parseMoney(text) {
   return Math.round(Number(cleaned) * 100);
 }
 
+// A typed calculation like "45 + 12.50", "(20 + 5) * 3" or "$1,200 / 2" → cents; null if it isn't one.
+// Only numbers, + - * / and parentheses are understood (no eval).
+export function evalMoney(text) {
+  const tokens = String(text).replace(/[$,\s]/g, '').replace(/[×x]/gi, '*').replace(/÷/g, '/').replace(/−/g, '-').match(/\d+\.?\d*|\.\d+|[-+*/()]|./g);
+  if (!tokens) return null;
+  let i = 0;
+  const peek = () => tokens[i];
+  function primary() {
+    const t = tokens[i++];
+    if (t === '-') return -primary();
+    if (t === '+') return primary();
+    if (t === '(') {
+      const v = sum();
+      if (tokens[i++] !== ')') throw new Error('missing )');
+      return v;
+    }
+    if (t !== undefined && /^(\d|\.\d)/.test(t)) return Number(t);
+    throw new Error('bad token');
+  }
+  function product() {
+    let v = primary();
+    while (peek() === '*' || peek() === '/') {
+      const op = tokens[i++];
+      const r = primary();
+      if (op === '/' && r === 0) throw new Error('divide by zero');
+      v = op === '*' ? v * r : v / r;
+    }
+    return v;
+  }
+  function sum() {
+    let v = product();
+    while (peek() === '+' || peek() === '-') v = tokens[i++] === '+' ? v + product() : v - product();
+    return v;
+  }
+  try {
+    const v = sum();
+    return i === tokens.length && Number.isFinite(v) ? Math.round(v * 100) : null;
+  } catch {
+    return null;
+  }
+}
+
 // What a category's target asks for this month, given what was left over coming into it.
 function targetNeed(target, month, carry) {
   if (!target?.amount) return 0;

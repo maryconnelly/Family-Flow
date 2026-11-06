@@ -37,7 +37,7 @@ function readView() {
 }
 
 export default function App() {
-  const { state, update, error } = useStore();
+  const { state, update, error, undo, redo, canUndo, canRedo } = useStore();
   const [tab, setTab] = useState(tabFromHash);
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [monthStart, setMonthStart] = useState(() => startOfMonth(new Date()));
@@ -73,7 +73,13 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>🏡 Home Hub</h1>
+        <div className="brand">
+          <h1>🏡 Home Hub</h1>
+          <div className="undo-redo" role="group" aria-label="Undo and redo">
+            <button className="icon-btn" onClick={undo} disabled={!canUndo} aria-label="Undo" title="Undo (⌘Z)">↶</button>
+            <button className="icon-btn" onClick={redo} disabled={!canRedo} aria-label="Redo" title="Redo (⇧⌘Z)">↷</button>
+          </div>
+        </div>
         <nav className="tabs">
           {TABS.map(([id, label]) => (
             <a key={id} href={`#${id}`} className={tab === id ? 'active' : ''}>
